@@ -1,0 +1,34 @@
+{
+  "name": "easy-replace-in-files",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "bin": "./index.js",
+  "scripts": {
+    "eslint": "eslint --quiet .",
+    "eslint:fix": "eslint --quiet --fix ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ernilambar/easy-replace-in-files.git"
+  },
+  "keywords": [
+    "replace"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ernilambar/easy-replace-in-files/issues"
+  },
+  "homepage": "https://github.com/ernilambar/easy-replace-in-files#readme",
+  "dependencies": {
+    "@babel/core": "^7.18.10",
+    "replace-in-file": "^6.3.5",
+    "unixify": "^1.0.0"
+  },
+  "devDependencies": {
+    "@wordpress/eslint-plugin": "^12.9.0",
+    "eslint": "^8.21.0"
+  }
+}
