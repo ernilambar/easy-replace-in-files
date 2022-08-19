@@ -1,3 +1,5 @@
+import { readPackageUpSync } from 'read-pkg-up';
+
 const isEmptyObject = ( obj ) => {
 	return obj && Object.keys( obj ).length === 0 && Object.getPrototypeOf( obj ) === Object.prototype;
 };
@@ -13,7 +15,33 @@ const getParamValue = ( string, mode = 'string' ) => {
 };
 
 const replacePlaceholders = ( string ) => {
-	string = string.replace( '$npm_package_version', process.env.npm_package_version );
+	const matches = string.match( /\$\$(.*?)\$\$/g );
+
+	if ( ! Array.isArray( matches ) || matches.length === 0 ) {
+		return string;
+	}
+
+	const keys = [];
+
+	matches.forEach( function( matchItem ) {
+		keys.push( matchItem.replace( /\$\$/g, '' ) );
+	} );
+
+	keys.forEach( function( item ) {
+		if ( process.env.hasOwnProperty( item ) ) {
+			string = string.replace( `$$${ item }$$`, process.env[ item ] );
+		}
+
+		if ( item.includes( 'package__' ) ) {
+			const pvar = item.replace( 'package__', '' );
+
+			const pkg = readPackageUpSync().packageJson;
+
+			if ( pkg.hasOwnProperty( pvar ) ) {
+				string = string.replace( `$$${ item }$$`, pkg[ pvar ] );
+			}
+		}
+	} );
 
 	return string;
 };

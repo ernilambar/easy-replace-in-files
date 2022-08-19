@@ -45,7 +45,9 @@ const easyRelaceInFiles = () => {
 			return;
 		}
 
-		const filesValue = ( Array.isArray( item.files ) ) ? item.files : [ item.files ];
+		let filesValue = ( Array.isArray( item.files ) ) ? item.files : [ item.files ];
+
+		filesValue = filesValue.map( ( k ) => replacePlaceholders( k ) );
 
 		if ( ! Array.isArray( item.from ) && '' === item.from ) {
 			console.log( `${ chalk.cyan( 'WARN' ) }: ${ chalk.yellow( 'from' ) } key missing in the rule. Skipping.` );
