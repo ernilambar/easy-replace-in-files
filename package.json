@@ -24,6 +24,7 @@
   "homepage": "https://github.com/ernilambar/easy-replace-in-files#readme",
   "dependencies": {
     "@babel/core": "^7.18.10",
+    "chalk": "^5.0.1",
     "replace-in-file": "^6.3.5",
     "unixify": "^1.0.0"
   },

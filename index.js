@@ -2,13 +2,30 @@
 
 import fs from 'fs';
 import path from 'path';
+import chalk from 'chalk';
 import unixify from 'unixify';
 import replaceInFile from 'replace-in-file';
 
 const cwd = unixify( process.cwd() );
 
-function escapeRegex( value ) {
-	return value.replace( /[\-\[\]{}()*+?.,\\\^$|#\s]/g, '\\$&' );
+function isEmptyObject( obj ) {
+	return obj && Object.keys( obj ).length === 0 && Object.getPrototypeOf( obj ) === Object.prototype;
+}
+
+function getParamValue( string, mode = 'string' ) {
+  let output = string;
+
+  if ( mode === 'regex' ) {
+    output = new RegExp( string, 'g' )
+  }
+
+  return output;
+}
+
+function replaceVars( string ) {
+  string = string.replace( '$npm_package_version', process.env.npm_package_version );
+
+  return string;
 }
 
 let configFile = '';
@@ -16,8 +33,8 @@ let configFile = '';
 if ( fs.existsSync( path.resolve( cwd, 'easy-replace-in-files.json' ) ) ) {
 	configFile = 'easy-replace-in-files.json';
 } else {
-	console.log( 'Config file not found!' );
-	process.exit( 1 );
+	console.log( 'Config file not found! Please create easy-replace-in-files.json file.' );
+	process.exit();
 }
 
 const configFilePath = path.join( cwd, configFile );
@@ -30,25 +47,43 @@ try {
 	console.error( err );
 }
 
-const list = configData.replaceInFiles;
+const list = ( 'easyReplaceInFiles' in configData ) ? configData.easyReplaceInFiles : {};
+
+if ( isEmptyObject( list ) ) {
+	console.log( 'easyReplaceInFiles key not found in config file.' );
+	process.exit();
+}
 
 list.forEach( function( item ) {
-	const fromValue = ( 'type' in item && item.type === 'regex' ) ? new RegExp( item.from, 'g' ) : item.from;
+  let filesValue = ( Array.isArray( item.files ) ) ? item.files : [ item.files ];
 
-	let toValue = item.to;
+  const mode = ( 'type' in item && item.type === 'regex' ) ? 'regex' : 'string';
 
-	toValue = toValue.replace( new RegExp( escapeRegex( '$npm_package_version' ), 'g' ), process.env.npm_package_version );
+  let fromValue = ( Array.isArray( item.from ) ) ? item.from : [ item.from ];
+
+  fromValue = fromValue.map( item => getParamValue( item, mode ) );
+
+  let toValue = '';
+
+  if ( Array.isArray( item.to ) ) {
+    toValue = item.to.map( item => replaceVars( item ) );
+  } else {
+    toValue = replaceVars( item.to )
+  }
 
 	const options = {
-		files: path.join( cwd, item.files ),
+		files: filesValue,
 		from: fromValue,
 		to: toValue,
 	};
 
+  // console.log( 'item:', options);
+
 	try {
-		const results = replaceInFile.sync( options );
-		console.log( 'Replacement results:', results );
+		replaceInFile.sync( options );
 	} catch ( error ) {
 		console.error( 'Error occurred:', error );
 	}
 } );
+
+console.log( chalk.green( 'Replacing complete.' ) );
