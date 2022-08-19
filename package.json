@@ -25,6 +25,7 @@
   "dependencies": {
     "@babel/core": "^7.18.10",
     "chalk": "^5.0.1",
+    "read-pkg-up": "^9.1.0",
     "replace-in-file": "^6.3.5",
     "unixify": "^1.0.0"
   },
