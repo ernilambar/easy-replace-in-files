@@ -13,19 +13,19 @@ function isEmptyObject( obj ) {
 }
 
 function getParamValue( string, mode = 'string' ) {
-  let output = string;
+	let output = string;
 
-  if ( mode === 'regex' ) {
-    output = new RegExp( string, 'g' )
-  }
+	if ( mode === 'regex' ) {
+		output = new RegExp( string, 'g' );
+	}
 
-  return output;
+	return output;
 }
 
 function replaceVars( string ) {
-  string = string.replace( '$npm_package_version', process.env.npm_package_version );
+	string = string.replace( '$npm_package_version', process.env.npm_package_version );
 
-  return string;
+	return string;
 }
 
 let configFile = '';
@@ -55,21 +55,35 @@ if ( isEmptyObject( list ) ) {
 }
 
 list.forEach( function( item ) {
-  let filesValue = ( Array.isArray( item.files ) ) ? item.files : [ item.files ];
+	const defaults = { files: '', from: '', to: '', type: 'string' };
 
-  const mode = ( 'type' in item && item.type === 'regex' ) ? 'regex' : 'string';
+	item = { ...defaults, ...item };
 
-  let fromValue = ( Array.isArray( item.from ) ) ? item.from : [ item.from ];
+	// console.log( 'Item: ', item );
 
-  fromValue = fromValue.map( item => getParamValue( item, mode ) );
+	if ( ! Array.isArray( item.files ) && '' === item.files ) {
+		console.log( 'Key files missing in the rule. Skipping.' );
+		return;
+	}
 
-  let toValue = '';
+	const filesValue = ( Array.isArray( item.files ) ) ? item.files : [ item.files ];
 
-  if ( Array.isArray( item.to ) ) {
-    toValue = item.to.map( item => replaceVars( item ) );
-  } else {
-    toValue = replaceVars( item.to )
+  if ( ! Array.isArray( item.from ) && '' === item.from ) {
+    console.log( 'Key from missing in the rule. Skipping.' );
+    return;
   }
+
+	let fromValue = ( Array.isArray( item.from ) ) ? item.from : [ item.from ];
+
+	fromValue = fromValue.map( ( element ) => getParamValue( element, item.type ) );
+
+	let toValue = '';
+
+	if ( Array.isArray( item.to ) ) {
+		toValue = item.to.map( ( element ) => replaceVars( element ) );
+	} else {
+		toValue = replaceVars( item.to );
+	}
 
 	const options = {
 		files: filesValue,
@@ -77,7 +91,7 @@ list.forEach( function( item ) {
 		to: toValue,
 	};
 
-  // console.log( 'item:', options);
+	// console.log( 'Option:', options );
 
 	try {
 		replaceInFile.sync( options );
