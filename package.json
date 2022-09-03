@@ -6,8 +6,8 @@
   "type": "module",
   "bin": "./index.js",
   "scripts": {
-    "eslint": "eslint --quiet .",
-    "eslint:fix": "eslint --quiet --fix ."
+    "lint": "standard",
+    "lint:fix": "standard --fix"
   },
   "repository": {
     "type": "git",
@@ -22,6 +22,11 @@
     "url": "https://github.com/ernilambar/easy-replace-in-files/issues"
   },
   "homepage": "https://github.com/ernilambar/easy-replace-in-files#readme",
+  "standard": {
+    "globals": [
+      "__basedir"
+    ]
+  },
   "dependencies": {
     "@babel/core": "^7.18.10",
     "chalk": "^5.0.1",
@@ -30,7 +35,6 @@
     "unixify": "^1.0.0"
   },
   "devDependencies": {
-    "@wordpress/eslint-plugin": "^12.9.0",
-    "eslint": "^8.21.0"
+    "standard": "^17.0.0"
   }
 }
