@@ -5,16 +5,26 @@ const isEmptyObject = (obj) => {
 }
 
 const getParamValue = (string, mode = 'string') => {
-  let output = string
-
-  if (mode === 'regex') {
-    output = new RegExp(string, 'g')
+  if (typeof string !== 'string') {
+    return string
   }
 
-  return output
+  if (mode === 'regex') {
+    try {
+      return new RegExp(string, 'g')
+    } catch {
+      return string
+    }
+  }
+
+  return string
 }
 
 const replacePlaceholders = (string) => {
+  if (typeof string !== 'string') {
+    return string
+  }
+
   const matches = string.match(/\$\$(.*?)\$\$/g)
 
   if (!Array.isArray(matches) || matches.length === 0) {
@@ -35,9 +45,15 @@ const replacePlaceholders = (string) => {
     if (item.includes('package__')) {
       const pvar = item.replace('package__', '')
 
-      const pkg = readPackageUpSync().packageJson
+      let pkg
+      try {
+        const result = readPackageUpSync()
+        pkg = result?.packageJson
+      } catch {
+        pkg = undefined
+      }
 
-      if (Object.prototype.hasOwnProperty.call(pkg, pvar)) {
+      if (pkg && Object.prototype.hasOwnProperty.call(pkg, pvar)) {
         string = string.replace(`$$${item}$$`, pkg[pvar])
       }
     }

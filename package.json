@@ -1,34 +1,27 @@
 {
   "name": "easy-replace-in-files",
   "version": "1.0.3",
-  "description": "",
+  "description": "Find and replace in files using a config file.",
+  "keywords": [
+    "replace"
+  ],
+  "homepage": "https://github.com/ernilambar/easy-replace-in-files#readme",
+  "bugs": {
+    "url": "https://github.com/ernilambar/easy-replace-in-files/issues"
+  },
+  "license": "MIT",
+  "author": "Nilambar Sharma",
   "main": "index.js",
   "type": "module",
   "bin": "./index.js",
-  "scripts": {
-    "lint": "standard",
-    "format": "standard --fix"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ernilambar/easy-replace-in-files.git"
   },
-  "keywords": [
-    "replace"
-  ],
-  "author": "",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/ernilambar/easy-replace-in-files/issues"
-  },
-  "homepage": "https://github.com/ernilambar/easy-replace-in-files#readme",
-  "standard": {
-    "globals": [
-      "__basedir"
-    ]
-  },
-  "engines": {
-    "node": ">=18"
+  "scripts": {
+    "lint": "standard",
+    "format": "standard --fix",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "chalk": "^5.6.2",
@@ -38,5 +31,13 @@
   },
   "devDependencies": {
     "standard": "^17.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "standard": {
+    "globals": [
+      "__basedir"
+    ]
   }
 }

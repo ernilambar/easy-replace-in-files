@@ -1,6 +1,6 @@
 # easy-replace-in-files
 
-> Simple tool for find and replace in files. Uses config file for files, from and to rules.
+Find and replace in files via a config file. Supports globs, regex, and placeholders (`$$ENV_VAR$$`, `$$package__version$$`).
 
 ## Install
 
@@ -8,9 +8,9 @@
 npm install --save-dev easy-replace-in-files
 ```
 
-## Example
+## Usage
 
-Create config file `easy-replace-in-files.json`
+Add `easy-replace-in-files.json` in your project root:
 
 ```json
 {
@@ -25,16 +25,10 @@ Create config file `easy-replace-in-files.json`
 }
 ```
 
-In `package.json` scripts
-
-```json
-"scripts" : {
-  "version": "easy-replace-in-files",
-}
-```
-
-In the terminal, run
+Run via script (e.g. in `package.json`: `"version": "easy-replace-in-files"`):
 
 ```sh
 npm run version
 ```
+
+**`--verbose`** — Log each rule and succeeded/skipped/failed counts.

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
-import { easyRelaceInFiles } from './src/app.js'
+import { easyReplaceInFiles } from './src/app.js'
 
-easyRelaceInFiles()
+const verbose = process.argv.includes('--verbose')
+easyReplaceInFiles({ verbose })

@@ -26,7 +26,13 @@ const isValidTo = (v) =>
   typeof v === 'string' ||
   (Array.isArray(v) && v.every(isStringifiable))
 
-const easyRelaceInFiles = () => {
+const truncate = (str, max = 50) => {
+  const s = String(str)
+  return s.length <= max ? s : s.slice(0, max) + '...'
+}
+
+const easyReplaceInFiles = (opts = {}) => {
+  const verbose = !!opts.verbose
   let configFile = ''
 
   if (fs.existsSync(path.resolve(cwd, 'easy-replace-in-files.json'))) {
@@ -62,6 +68,8 @@ const easyRelaceInFiles = () => {
     process.exit(1)
   }
 
+  let succeededCount = 0
+  let skippedCount = 0
   let failedCount = 0
 
   list.forEach(function (item, index) {
@@ -70,6 +78,7 @@ const easyRelaceInFiles = () => {
     item = { ...defaults, ...item }
 
     if (!isValidFiles(item.files)) {
+      skippedCount += 1
       console.log(`${chalk.cyan('WARN')}: rule ${index + 1}: ${chalk.yellow('files')} must be a non-empty string or non-empty array of strings. Skipping.`)
       return
     }
@@ -78,6 +87,7 @@ const easyRelaceInFiles = () => {
     filesValue = filesValue.map((k) => replacePlaceholders(k))
 
     if (!isValidFrom(item.from)) {
+      skippedCount += 1
       console.log(`${chalk.cyan('WARN')}: rule ${index + 1}: ${chalk.yellow('from')} must be a non-empty string or non-empty array of strings. Skipping.`)
       return
     }
@@ -86,6 +96,7 @@ const easyRelaceInFiles = () => {
     fromValue = fromValue.map((element) => getParamValue(element, item.type))
 
     if (!isValidTo(item.to)) {
+      skippedCount += 1
       console.log(`${chalk.cyan('WARN')}: rule ${index + 1}: ${chalk.yellow('to')} must be a string or array of strings. Skipping.`)
       return
     }
@@ -103,20 +114,29 @@ const easyRelaceInFiles = () => {
       to: toValue
     }
 
+    if (verbose) {
+      const fromPreview = fromValue.length === 1 ? truncate(fromValue[0]) : fromValue.map(truncate).join(', ')
+      const toPreview = Array.isArray(toValue) ? toValue.map(truncate).join(', ') : truncate(toValue)
+      console.log(chalk.gray(`Rule ${index + 1}: files=${filesValue.join(', ')} from=${fromPreview} to=${toPreview}`))
+    }
+
     try {
       replaceInFileSync(options)
+      succeededCount += 1
     } catch (error) {
       failedCount += 1
       console.error(`Error in rule ${index + 1} (files: ${filesValue.join(', ')}):`, error.message)
     }
   })
 
+  const summary = `${succeededCount} succeeded, ${skippedCount} skipped, ${failedCount} failed.`
   if (failedCount > 0) {
-    console.error(chalk.red(`Replacing complete with errors. ${failedCount} rule(s) failed.`))
+    console.error(chalk.red(`Replacing complete with errors. ${summary}`))
     process.exit(1)
   }
 
-  console.log(chalk.green('Replacing complete.'))
+  console.log(chalk.green(`Replacing complete. ${summary}`))
 }
 
-export { easyRelaceInFiles }
+const easyRelaceInFiles = easyReplaceInFiles
+export { easyReplaceInFiles, easyRelaceInFiles }
