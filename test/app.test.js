@@ -54,10 +54,11 @@ describe('easyReplaceInFiles (programmatic)', () => {
       }))
 
       const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
-      assert.strictEqual(result.succeeded, 2)
-      assert.strictEqual(result.skipped, 1)
+      // Invalid rule (empty files) fails schema validation at load; no rules run
+      assert.strictEqual(result.succeeded, 0)
+      assert.strictEqual(result.skipped, 0)
       assert.strictEqual(result.failed, 0)
-      assert.strictEqual(result.ok, true)
+      assert.strictEqual(result.ok, false)
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true })
     }

@@ -9,7 +9,8 @@ const { version } = require('./package.json')
 
 const argv = minimist(process.argv.slice(2), {
   string: ['config'],
-  boolean: ['verbose', 'dry-run', 'help', 'version']
+  boolean: ['verbose', 'dry-run', 'help', 'version'],
+  alias: { h: 'help', v: 'version' }
 })
 
 if (argv.help) {
@@ -21,8 +22,8 @@ Options:
   --config <path>   Config file (default: easy-replace-in-files.json)
   --dry-run         Show what would be changed without writing
   --verbose         Log each rule and counts
-  --help            Show this help
-  --version         Show version`)
+  --help, -h        Show this help
+  --version, -v     Show version`)
   process.exit(0)
 }
 

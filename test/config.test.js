@@ -81,8 +81,8 @@ describe('loadConfig', () => {
       assert.throws(
         () => loadConfig(tmp),
         (err) => {
-          assert.ok(err.message.includes('Config must be a plain object'))
-          assert.ok(err.message.includes('easyReplaceInFiles'))
+          assert.ok(err.message.includes('Config validation failed'))
+          assert.ok(err.message.includes('object'))
           return true
         }
       )
@@ -97,7 +97,10 @@ describe('loadConfig', () => {
       fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), '"x"')
       assert.throws(
         () => loadConfig(tmp),
-        (err) => err.message.includes('Config must be a plain object')
+        (err) => {
+          assert.ok(err.message.includes('Config validation failed'))
+          return true
+        }
       )
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true })
@@ -110,7 +113,10 @@ describe('loadConfig', () => {
       fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), '42')
       assert.throws(
         () => loadConfig(tmp),
-        (err) => err.message.includes('Config must be a plain object')
+        (err) => {
+          assert.ok(err.message.includes('Config validation failed'))
+          return true
+        }
       )
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true })
@@ -124,8 +130,8 @@ describe('loadConfig', () => {
       assert.throws(
         () => loadConfig(tmp),
         (err) => {
+          assert.ok(err.message.includes('Config validation failed'))
           assert.ok(err.message.includes('easyReplaceInFiles'))
-          assert.ok(err.message.includes('Expected shape'))
           return true
         }
       )
@@ -141,8 +147,8 @@ describe('loadConfig', () => {
       assert.throws(
         () => loadConfig(tmp),
         (err) => {
-          assert.ok(err.message.includes('must be an array of rules'))
-          assert.ok(err.message.includes('object'))
+          assert.ok(err.message.includes('Config validation failed'))
+          assert.ok(err.message.includes('array'))
           return true
         }
       )
@@ -157,7 +163,11 @@ describe('loadConfig', () => {
       fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({ easyReplaceInFiles: 'x' }))
       assert.throws(
         () => loadConfig(tmp),
-        (err) => err.message.includes('must be an array of rules')
+        (err) => {
+          assert.ok(err.message.includes('Config validation failed'))
+          assert.ok(err.message.includes('array'))
+          return true
+        }
       )
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true })
@@ -212,6 +222,48 @@ describe('loadConfig', () => {
       fs.writeFileSync(configPath, JSON.stringify({ easyReplaceInFiles: [] }))
       const result = loadConfig('/other', configPath)
       assert.strictEqual(result.configFilePath, configPath)
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('throws when rule has invalid type (from: number)', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-config-'))
+    try {
+      fs.writeFileSync(
+        path.join(tmp, 'easy-replace-in-files.json'),
+        JSON.stringify({ easyReplaceInFiles: [{ files: 'a.txt', from: 42, to: 'y' }] })
+      )
+      assert.throws(
+        () => loadConfig(tmp),
+        (err) => {
+          assert.ok(err.message.includes('Config validation failed'))
+          assert.ok(err.message.includes('Rule 1'))
+          assert.ok(err.message.includes('from'))
+          return true
+        }
+      )
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('throws when rule is missing required field (from)', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-config-'))
+    try {
+      fs.writeFileSync(
+        path.join(tmp, 'easy-replace-in-files.json'),
+        JSON.stringify({ easyReplaceInFiles: [{ files: 'a.txt', to: 'y' }] })
+      )
+      assert.throws(
+        () => loadConfig(tmp),
+        (err) => {
+          assert.ok(err.message.includes('Config validation failed'))
+          assert.ok(err.message.includes('Rule 1'))
+          assert.ok(err.message.includes('from'))
+          return true
+        }
+      )
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true })
     }
