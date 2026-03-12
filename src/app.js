@@ -13,16 +13,21 @@ import {
 } from './utils.js'
 import { loadConfig } from './config.js'
 
-let deprecationWarned = false
+/** @typedef {{ succeeded: number, skipped: number, failed: number, ok: boolean }} ReplaceResult */
+
+/**
+ * @typedef {Object} EasyReplaceOptions
+ * @property {boolean} [verbose] - Log each rule (files, from, to)
+ * @property {string} [cwd] - Working directory for config and relative file paths (default: process.cwd())
+ * @property {string} [configPath] - Path to config file (default: easy-replace-in-files.json in cwd)
+ * @property {boolean} [noExit] - If true, never call process.exit(); caller handles exit (default: false)
+ */
 
 /**
  * Run find-and-replace rules from config.
- * @param {Object} [opts] - Options
- * @param {boolean} [opts.verbose] - Log each rule
- * @param {string} [opts.cwd] - Working directory for config and relative file paths (default: process.cwd())
- * @param {string} [opts.configPath] - Path to config file (default: easy-replace-in-files.json in cwd)
- * @param {boolean} [opts.noExit] - If true, never call process.exit(); caller handles exit (default: false)
- * @returns {{ succeeded: number, skipped: number, failed: number, ok: boolean }}
+ * @param {EasyReplaceOptions} [opts] - Options
+ * @returns {ReplaceResult}
+ * @throws Never throws; load errors are reported via console and return value (ok: false).
  */
 function easyReplaceInFiles (opts = {}) {
   const verbose = !!opts.verbose
@@ -116,17 +121,4 @@ function easyReplaceInFiles (opts = {}) {
   return { succeeded: succeededCount, skipped: skippedCount, failed: failedCount, ok }
 }
 
-/**
- * @deprecated Use easyReplaceInFiles instead. This typo alias will be removed in the next major version.
- * @param {Object} [opts] - Same as easyReplaceInFiles
- * @returns {{ succeeded: number, skipped: number, failed: number, ok: boolean }}
- */
-function easyRelaceInFiles (opts = {}) {
-  if (!deprecationWarned) {
-    deprecationWarned = true
-    console.warn('easyRelaceInFiles is deprecated; use easyReplaceInFiles. This alias will be removed in v2.0.0.')
-  }
-  return easyReplaceInFiles(opts)
-}
-
-export { easyReplaceInFiles, easyRelaceInFiles }
+export { easyReplaceInFiles }

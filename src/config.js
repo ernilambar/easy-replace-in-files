@@ -6,10 +6,16 @@ import { isPlainObject } from './utils.js'
 const DEFAULT_CONFIG_FILE = 'easy-replace-in-files.json'
 
 /**
+ * @typedef {Object} LoadConfigResult
+ * @property {{ easyReplaceInFiles: Array<{ files: string|string[], from: string|string[], to: string|string[], type?: string }> }} configData
+ * @property {string} configFilePath
+ */
+
+/**
  * Load and validate config from the given directory or explicit path.
  * @param {string} cwd - Working directory for resolving relative config path
  * @param {string} [configPath] - Optional path to config file (relative to cwd or absolute)
- * @returns {{ configData: { easyReplaceInFiles: Array }, configFilePath: string }}
+ * @returns {LoadConfigResult}
  * @throws {Error} When config file is missing, invalid JSON, or wrong shape (with clear message)
  */
 export function loadConfig (cwd, configPath) {
