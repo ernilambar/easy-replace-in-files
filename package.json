@@ -1,6 +1,6 @@
 {
   "name": "easy-replace-in-files",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Find and replace in files using a config file.",
   "keywords": [
     "replace"

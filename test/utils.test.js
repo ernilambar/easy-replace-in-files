@@ -23,6 +23,15 @@ describe('isEmptyObject', () => {
     assert.ok(!isEmptyObject(''))
     assert.ok(!isEmptyObject(0))
   })
+
+  it('returns falsy for undefined', () => {
+    assert.ok(!isEmptyObject(undefined))
+  })
+
+  it('returns true for object with symbol keys only (Object.keys omits symbols)', () => {
+    const sym = Symbol('x')
+    assert.strictEqual(isEmptyObject({ [sym]: 1 }), true)
+  })
 })
 
 describe('getParamValue', () => {
@@ -51,6 +60,20 @@ describe('getParamValue', () => {
   it('returns non-string input as-is (defensive)', () => {
     assert.strictEqual(getParamValue(42), 42)
     assert.strictEqual(getParamValue(null), null)
+  })
+
+  it('returns empty string as-is in string mode', () => {
+    assert.strictEqual(getParamValue('', 'string'), '')
+  })
+
+  it('handles unknown mode like string mode', () => {
+    assert.strictEqual(getParamValue('x', 'unknown'), 'x')
+  })
+
+  it('handles regex with special chars that need escaping', () => {
+    const result = getParamValue('\\s+', 'regex')
+    assert(result instanceof RegExp)
+    assert.strictEqual('a  b'.replace(result, ''), 'ab')
   })
 })
 
@@ -90,6 +113,37 @@ describe('replacePlaceholders', () => {
     } finally {
       delete process.env[a]
       delete process.env[b]
+    }
+  })
+
+  it('leaves malformed placeholder unchanged', () => {
+    assert.strictEqual(replacePlaceholders('$$noClosing'), '$$noClosing')
+    assert.strictEqual(replacePlaceholders('noDollars'), 'noDollars')
+  })
+
+  it('handles placeholder at start and end', () => {
+    const key = 'EDGE_' + Date.now()
+    process.env[key] = 'v'
+    try {
+      assert.strictEqual(replacePlaceholders(`$$${key}$$x`), 'vx')
+      assert.strictEqual(replacePlaceholders(`x$$${key}$$`), 'xv')
+    } finally {
+      delete process.env[key]
+    }
+  })
+
+  it('handles empty string placeholder key', () => {
+    const result = replacePlaceholders('$$$$')
+    assert.ok(result === '$$$$' || result === '')
+  })
+
+  it('handles env value with special regex chars', () => {
+    const key = 'SPECIAL_' + Date.now()
+    process.env[key] = '$1.0'
+    try {
+      assert.strictEqual(replacePlaceholders(`ver: $$${key}$$`), 'ver: $1.0')
+    } finally {
+      delete process.env[key]
     }
   })
 })

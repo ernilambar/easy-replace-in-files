@@ -66,4 +66,118 @@ describe('CLI', () => {
       fs.rmSync(tmp, { recursive: true, force: true })
     }
   })
+
+  it('exits 1 when config is not a plain object', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-cli-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), '[]')
+      const result = spawnSync(process.execPath, [indexPath], { cwd: tmp, encoding: 'utf8' })
+      assert.strictEqual(result.status, 1)
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('exits 1 when easyReplaceInFiles is not an array', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-cli-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({ easyReplaceInFiles: {} }))
+      const result = spawnSync(process.execPath, [indexPath], { cwd: tmp, encoding: 'utf8' })
+      assert.strictEqual(result.status, 1)
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('exits 0 with empty rules array', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-cli-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({ easyReplaceInFiles: [] }))
+      const result = spawnSync(process.execPath, [indexPath], { cwd: tmp, encoding: 'utf8' })
+      assert.strictEqual(result.status, 0)
+      assert.ok(result.stdout.includes('0 succeeded, 0 skipped, 0 failed'))
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('replaces using regex type', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-cli-test-'))
+    try {
+      const config = {
+        easyReplaceInFiles: [
+          { files: 'target.txt', from: '\\d+', type: 'regex', to: 'N' }
+        ]
+      }
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify(config))
+      fs.writeFileSync(path.join(tmp, 'target.txt'), 'a1b22c')
+
+      const result = spawnSync(process.execPath, [indexPath], { cwd: tmp, encoding: 'utf8' })
+      assert.strictEqual(result.status, 0)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'target.txt'), 'utf8'), 'aNbNc')
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('handles array of files and multiple from/to', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-cli-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'a.txt'), 'X')
+      fs.writeFileSync(path.join(tmp, 'b.txt'), 'X')
+      const config = {
+        easyReplaceInFiles: [
+          { files: ['a.txt', 'b.txt'], from: ['X', 'Y'], to: ['A', 'B'] }
+        ]
+      }
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify(config))
+
+      const result = spawnSync(process.execPath, [indexPath], { cwd: tmp, encoding: 'utf8' })
+      assert.strictEqual(result.status, 0)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'a.txt'), 'utf8'), 'A')
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'b.txt'), 'utf8'), 'A')
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('skips invalid rule and continues; summary shows skipped', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-cli-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'ok.txt'), 'x')
+      const config = {
+        easyReplaceInFiles: [
+          { files: 'ok.txt', from: 'x', to: 'y' },
+          { files: '', from: 'a', to: 'b' },
+          { files: 'ok.txt', from: 'y', to: 'z' }
+        ]
+      }
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify(config))
+
+      const result = spawnSync(process.execPath, [indexPath], { cwd: tmp, encoding: 'utf8' })
+      assert.strictEqual(result.status, 0)
+      assert.ok(result.stdout.includes('succeeded') && result.stdout.includes('skipped'))
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'ok.txt'), 'utf8'), 'z')
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('--verbose includes rule lines and summary', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-cli-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'f.txt'), 'a')
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
+        easyReplaceInFiles: [{ files: 'f.txt', from: 'a', to: 'b' }]
+      }))
+
+      const result = spawnSync(process.execPath, [indexPath, '--verbose'], { cwd: tmp, encoding: 'utf8' })
+      assert.strictEqual(result.status, 0)
+      assert.ok(result.stdout.includes('Rule 1'))
+      assert.ok(result.stdout.includes('f.txt'))
+      assert.ok(result.stdout.includes('succeeded'))
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
 })
