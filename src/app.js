@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import chalk from 'chalk'
 import unixify from 'unixify'
-import replaceInFile from 'replace-in-file'
+import { replaceInFileSync } from 'replace-in-file'
 
 import { isEmptyObject, getParamValue, replacePlaceholders } from './utils.js'
 
@@ -73,7 +73,7 @@ const easyRelaceInFiles = () => {
     }
 
     try {
-      replaceInFile.sync(options)
+      replaceInFileSync(options)
     } catch (error) {
       console.error('Error occurred:', error)
     }

@@ -27,6 +27,7 @@ wp-cli.local.yml
 yarn-error.log
 npm-debug.log
 .pnpm-debug.log
+plan.md
 
 # Ignored extensions
 *~
