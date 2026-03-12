@@ -19,6 +19,7 @@ project.properties
 .sublimelinterrc
 nbproject/private/
 tmp/
+tmp-cli-test-*/
 
 # Environment files
 .env
