@@ -199,4 +199,57 @@ describe('CLI', () => {
       fs.rmSync(tmp, { recursive: true, force: true })
     }
   })
+
+  it('exits 1 when --config is last (no path) and error on stderr', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-cli-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({ easyReplaceInFiles: [] }))
+      const result = spawnSync(process.execPath, [indexPath, '--config'], {
+        cwd: tmp,
+        encoding: 'utf8'
+      })
+      assert.strictEqual(result.status, 1)
+      assert.ok(result.stderr.includes('--config requires a path'))
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('exits 1 when --config is followed by another flag', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-cli-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({ easyReplaceInFiles: [] }))
+      const result = spawnSync(process.execPath, [indexPath, '--config', '--verbose'], {
+        cwd: tmp,
+        encoding: 'utf8'
+      })
+      assert.strictEqual(result.status, 1)
+      assert.ok(result.stderr.includes('--config requires a path'))
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('on replace failure, summary goes to stderr', () => {
+    if (process.platform === 'win32') return
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-cli-test-'))
+    try {
+      const unreadable = path.join(tmp, 'f.txt')
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
+        easyReplaceInFiles: [{ files: 'f.txt', from: 'x', to: 'y' }]
+      }))
+      fs.writeFileSync(unreadable, 'x')
+      fs.chmodSync(unreadable, 0o000)
+      try {
+        const result = spawnSync(process.execPath, [indexPath], { cwd: tmp, encoding: 'utf8' })
+        assert.strictEqual(result.status, 1)
+        assert.ok(result.stderr.includes('failed') && result.stderr.includes('Replacing complete with errors'))
+        assert.ok(!result.stdout.includes('Replacing complete with errors'))
+      } finally {
+        try { fs.chmodSync(unreadable, 0o644) } catch {}
+      }
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
 })

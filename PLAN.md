@@ -44,28 +44,28 @@ Priorities: **robust**, **tested**, **futureproof**, **edge-case safe**. Phases 
 
 ### 2.1 Config and CLI args
 
-- [ ] **`--config` without value** — CLI: avoid reading `undefined` as path; exit 1 with clear message or treat as “use default path” (document choice).
-- [ ] **Config has extra top-level keys** — Keep allowed (no change) and document; or validate strict shape (minimal code).
+- [x] **`--config` without value** — CLI: exit 1 with clear message when `--config` is last or followed by a flag; avoid reading `undefined` as path; exit 1 with clear message or treat as “use default path” (document choice).
+- [x] **Config has extra top-level keys** — Keep allowed (no change) and document; or validate strict shape (minimal code).
 
 ### 2.2 Rule validation and replace-in-file behavior
 
-- [ ] **`from` and `to` array length mismatch** — `replace-in-file` behavior: document and/or validate (e.g. warn and skip rule, or align lengths by truncation/padding). Add test.
-- [ ] **Empty `to`** — Allowed (replace with empty string). Add test so it stays allowed.
-- [ ] **No files matching glob** — Does `replaceInFileSync` throw or return? Add test; if it throws, catch and count as failed with clear message.
-- [ ] **Invalid regex in rule** — `getParamValue` returns string for invalid regex; `replace-in-file` may still fail. Either: (a) validate regex when `type === 'regex'` and skip rule with warn, or (b) catch replace error and count as failed. Add test.
-- [ ] **Unreadable or unwritable file** — Catch replace errors and count as failed; don’t crash. Add test (e.g. permission or read-only).
+- [x] **`from` and `to` array length mismatch** — `replace-in-file` behavior: document and/or validate (e.g. warn and skip rule, or align lengths by truncation/padding). Add test.
+- [x] **Empty `to`** — Allowed (replace with empty string). Add test so it stays allowed.
+- [x] **No files matching glob** — Does `replaceInFileSync` throw or return? Add test; if it throws, catch and count as failed with clear message.
+- [x] **Invalid regex in rule** — `getParamValue` returns string for invalid regex; `replace-in-file` may still fail. Either: (a) validate regex when `type === 'regex'` and skip rule with warn, or (b) catch replace error and count as failed. Add test.
+- [x] **Unreadable or unwritable file** — Catch replace errors and count as failed; don’t crash. Add test (e.g. permission or read-only).
 
 ### 2.3 Placeholders and paths
 
-- [ ] **`package__` nested key (e.g. `package__scripts.build`)** — Current code uses `pkg[pvar]` so only top-level works. Document or extend (minimal impl: e.g. split by `.` and traverse). Test current behavior.
-- [ ] **Placeholder key with `$$` inside** — Document behavior; add test for one pattern (e.g. `$$a$$b$$`).
-- [ ] **Absolute path in rule `files`** — Already resolved when not absolute; test that absolute path is used as-is relative to `cwd` where relevant.
-- [ ] **Empty string placeholder `$$$$`** — Already tested in utils; ensure app doesn’t break when used in `files`/`to`.
+- [x] **`package__` nested key (e.g. `package__scripts.build`)** — Current code uses `pkg[pvar]` so only top-level works. Document or extend (minimal impl: e.g. split by `.` and traverse). Test current behavior.
+- [x] **Placeholder key with `$$` inside** — Document behavior; add test for one pattern (e.g. `$$a$$b$$`).
+- [x] **Absolute path in rule `files`** — Already resolved when not absolute; test that absolute path is used as-is relative to `cwd` where relevant.
+- [x] **Empty string placeholder `$$$$`** — Already tested in utils; ensure app doesn’t break when used in `files`/`to`.
 
 ### 2.4 Environment and output
 
-- [ ] **Stderr vs stdout** — Ensure errors and summary go to stderr on failure so scripts can rely on exit code and clean stdout. Add test (e.g. capture stderr).
-- [ ] **Unicode and special characters** — One test with non-ASCII in file path (if supported) and in content; document any limits.
+- [x] **Stderr vs stdout** — Ensure errors and summary go to stderr on failure so scripts can rely on exit code and clean stdout. Add test (e.g. capture stderr).
+- [x] **Unicode and special characters** — One test with non-ASCII in file path (if supported) and in content; document any limits.
 
 **Exit criteria:** Edge cases documented and tested; errors handled without crash; optional small validation/warning changes only.
 
@@ -77,7 +77,6 @@ Priorities: **robust**, **tested**, **futureproof**, **edge-case safe**. Phases 
 
 ### 3.1 Contracts and types
 
-- [ ] **JSDoc** — Complete `@param`, `@returns`, `@throws` for public functions (config, app, utils exports). Use `@typedef` for options and return types where helpful.
 - [ ] **Config shape** — Document rule shape (files, from, to, type) and optionally add a small runtime check (e.g. allowed `type` values) with a clear error message.
 
 ### 3.2 Dependencies and Node

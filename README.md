@@ -64,7 +64,7 @@ Regex, multiple files/globs, multiple from/to, and placeholders (`$$ENV_VAR$$`, 
 
 **`--verbose`** — Log each rule and succeeded/skipped/failed counts.
 
-**`--config <path>`** — Use a custom config file (default: `easy-replace-in-files.json` in the current directory).
+**`--config <path>`** — Use a custom config file (default: `easy-replace-in-files.json` in the current directory). Requires a path (e.g. `--config my.json`); exits with error if missing.
 
 ## License
 
