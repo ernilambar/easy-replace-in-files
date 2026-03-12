@@ -20,7 +20,7 @@ import { loadConfig } from './config.js'
  * @property {boolean} [verbose] - Log each rule (files, from, to)
  * @property {boolean} [dryRun] - If true, show what would be changed without writing (default: false)
  * @property {string} [cwd] - Working directory for config and relative file paths (default: process.cwd())
- * @property {string} [configPath] - Path to config file (default: easy-replace-in-files.json in cwd)
+ * @property {string} [configPath] - Path to config file (default: easy-replace-in-files.json or easy-replace.json in cwd, first existing wins)
  * @property {boolean} [noExit] - If true, never call process.exit(); caller handles exit (default: false)
  */
 

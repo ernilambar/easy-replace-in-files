@@ -19,7 +19,7 @@ if (argv.help) {
 Usage: easy-replace-in-files [options]
 
 Options:
-  --config <path>   Config file (default: easy-replace-in-files.json)
+  --config <path>   Config file (default: easy-replace-in-files.json or easy-replace.json, first found)
   --dry-run         Show what would be changed without writing
   --verbose         Log each rule and counts
   --help, -h        Show this help
