@@ -18,6 +18,7 @@ import { loadConfig } from './config.js'
 /**
  * @typedef {Object} EasyReplaceOptions
  * @property {boolean} [verbose] - Log each rule (files, from, to)
+ * @property {boolean} [dryRun] - If true, show what would be changed without writing (default: false)
  * @property {string} [cwd] - Working directory for config and relative file paths (default: process.cwd())
  * @property {string} [configPath] - Path to config file (default: easy-replace-in-files.json in cwd)
  * @property {boolean} [noExit] - If true, never call process.exit(); caller handles exit (default: false)
@@ -31,6 +32,7 @@ import { loadConfig } from './config.js'
  */
 function easyReplaceInFiles (opts = {}) {
   const verbose = !!opts.verbose
+  const dryRun = !!opts.dryRun
   const noExit = !!opts.noExit
   const cwd = unixify(opts.cwd ?? process.cwd())
 
@@ -90,7 +92,9 @@ function easyReplaceInFiles (opts = {}) {
     const options = {
       files: filesValue,
       from: fromValue,
-      to: toValue
+      to: toValue,
+      dry: dryRun,
+      allowEmptyPaths: true
     }
 
     if (verbose) {
@@ -100,7 +104,16 @@ function easyReplaceInFiles (opts = {}) {
     }
 
     try {
-      replaceInFileSync(options)
+      const results = replaceInFileSync(options)
+      if (dryRun) {
+        const changed = results.filter((r) => r.hasChanged)
+        if (changed.length > 0) {
+          console.log(chalk.yellow(`Rule ${index + 1}: ${changed.length} file(s) would be changed`))
+          if (verbose) {
+            changed.forEach((r) => console.log(chalk.gray(`  - ${r.file}`)))
+          }
+        }
+      }
       succeededCount += 1
     } catch (error) {
       failedCount += 1
@@ -110,6 +123,10 @@ function easyReplaceInFiles (opts = {}) {
 
   const ok = failedCount === 0
   const summary = `${succeededCount} succeeded, ${skippedCount} skipped, ${failedCount} failed.`
+
+  if (dryRun && failedCount === 0) {
+    console.log(chalk.yellow('Dry run — no files written.'))
+  }
 
   if (failedCount > 0) {
     console.error(chalk.red(`Replacing complete with errors. ${summary}`))
