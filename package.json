@@ -1,6 +1,6 @@
 {
   "name": "easy-replace-in-files",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "description": "CLI to find and replace in files via a JSON config. Supports globs, regex, and placeholders (e.g. $$package__version$$, $$ENV_VAR$$). Great for version bumps and build-time replacements.",
   "keywords": [
     "replace",
@@ -15,7 +15,10 @@
     "build"
   ],
   "files": [
-    "index.js"
+    "index.js",
+    "src",
+    "README.md",
+    "CHANGELOG.md"
   ],
   "homepage": "https://github.com/ernilambar/easy-replace-in-files#readme",
   "bugs": {
@@ -45,7 +48,7 @@
     "standard": "^17.1.0"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "standard": {
     "globals": []

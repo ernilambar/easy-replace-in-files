@@ -1,32 +1,66 @@
 import { readPackageUpSync } from 'read-pkg-up'
 
+/**
+ * @param {unknown} obj
+ * @returns {boolean}
+ */
 const isEmptyObject = (obj) => {
   return obj && Object.keys(obj).length === 0 && Object.getPrototypeOf(obj) === Object.prototype
 }
 
+/**
+ * @param {unknown} obj
+ * @returns {obj is Record<string, unknown>}
+ */
 const isPlainObject = (obj) =>
   obj !== null && typeof obj === 'object' && !Array.isArray(obj)
 
+/**
+ * @param {unknown} x
+ * @returns {boolean}
+ */
 const isStringifiable = (x) =>
   x === null || typeof x === 'string' || typeof x === 'number' || typeof x === 'boolean'
 
+/**
+ * @param {unknown} v
+ * @returns {boolean}
+ */
 const isValidFiles = (v) =>
   (typeof v === 'string' && v !== '') ||
   (Array.isArray(v) && v.length > 0 && v.every(isStringifiable))
 
+/**
+ * @param {unknown} v
+ * @returns {boolean}
+ */
 const isValidFrom = (v) =>
   (typeof v === 'string' && v !== '') ||
   (Array.isArray(v) && v.length > 0 && v.every(isStringifiable))
 
+/**
+ * @param {unknown} v
+ * @returns {boolean}
+ */
 const isValidTo = (v) =>
   typeof v === 'string' ||
   (Array.isArray(v) && v.every(isStringifiable))
 
+/**
+ * @param {string|unknown} str - Coerced to string (e.g. for preview of RegExp)
+ * @param {number} [max=50]
+ * @returns {string}
+ */
 const truncate = (str, max = 50) => {
   const s = String(str)
   return s.length <= max ? s : s.slice(0, max) + '...'
 }
 
+/**
+ * @param {string} string
+ * @param {string} [mode='string']
+ * @returns {string|RegExp}
+ */
 const getParamValue = (string, mode = 'string') => {
   if (typeof string !== 'string') {
     return string
@@ -43,6 +77,10 @@ const getParamValue = (string, mode = 'string') => {
   return string
 }
 
+/**
+ * @param {string} string
+ * @returns {string}
+ */
 const replacePlaceholders = (string) => {
   if (typeof string !== 'string') {
     return string
