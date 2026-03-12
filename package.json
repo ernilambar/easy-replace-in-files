@@ -28,7 +28,9 @@
   "author": "Nilambar Sharma <nilambar@outlook.com> (https://github.com/ernilambar)",
   "main": "index.js",
   "type": "module",
-  "bin": "./index.js",
+  "bin": {
+    "easy-replace-in-files": "index.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ernilambar/easy-replace-in-files.git"
