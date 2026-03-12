@@ -14,28 +14,30 @@ const easyRelaceInFiles = () => {
   if (fs.existsSync(path.resolve(cwd, 'easy-replace-in-files.json'))) {
     configFile = 'easy-replace-in-files.json'
   } else {
-    console.log(`Config file not found! Please create ${chalk.yellow('easy-replace-in-files.json')} file.`)
-    process.exit()
+    console.error(`Config file not found! Please create ${chalk.yellow('easy-replace-in-files.json')} file.`)
+    process.exit(1)
   }
 
   const configFilePath = path.join(cwd, configFile)
 
   let configData
-
   try {
-    configData = JSON.parse(fs.readFileSync(configFilePath))
+    configData = JSON.parse(fs.readFileSync(configFilePath, 'utf8'))
   } catch (err) {
-    console.error(err)
+    console.error('Invalid config file:', err.message)
+    process.exit(1)
   }
 
   const list = ('easyReplaceInFiles' in configData) ? configData.easyReplaceInFiles : {}
 
   if (isEmptyObject(list)) {
-    console.log(`${chalk.yellow('easyReplaceInFiles')} key not found in config file.`)
-    process.exit()
+    console.error(`${chalk.yellow('easyReplaceInFiles')} key not found in config file.`)
+    process.exit(1)
   }
 
-  list.forEach(function (item) {
+  let failedCount = 0
+
+  list.forEach(function (item, index) {
     const defaults = { files: '', from: '', to: '', type: 'string' }
 
     item = { ...defaults, ...item }
@@ -75,9 +77,15 @@ const easyRelaceInFiles = () => {
     try {
       replaceInFileSync(options)
     } catch (error) {
-      console.error('Error occurred:', error)
+      failedCount += 1
+      console.error(`Error in rule ${index + 1} (files: ${filesValue.join(', ')}):`, error.message)
     }
   })
+
+  if (failedCount > 0) {
+    console.error(chalk.red(`Replacing complete with errors. ${failedCount} rule(s) failed.`))
+    process.exit(1)
+  }
 
   console.log(chalk.green('Replacing complete.'))
 }
