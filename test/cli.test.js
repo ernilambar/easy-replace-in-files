@@ -180,4 +180,23 @@ describe('CLI', () => {
       fs.rmSync(tmp, { recursive: true, force: true })
     }
   })
+
+  it('uses --config when provided', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-cli-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'target.txt'), 'OLD')
+      fs.writeFileSync(path.join(tmp, 'custom.json'), JSON.stringify({
+        easyReplaceInFiles: [{ files: 'target.txt', from: 'OLD', to: 'NEW' }]
+      }))
+
+      const result = spawnSync(process.execPath, [indexPath, '--config', 'custom.json'], {
+        cwd: tmp,
+        encoding: 'utf8'
+      })
+      assert.strictEqual(result.status, 0)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'target.txt'), 'utf8'), 'NEW')
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
 })

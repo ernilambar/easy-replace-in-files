@@ -32,3 +32,5 @@ npm run version
 ```
 
 **`--verbose`** — Log each rule and succeeded/skipped/failed counts.
+
+**`--config <path>`** — Use a custom config file (default: `easy-replace-in-files.json` in the current directory). Handy for monorepos or alternate config names.

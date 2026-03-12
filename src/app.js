@@ -1,80 +1,51 @@
-import fs from 'fs'
 import path from 'path'
 import chalk from 'chalk'
 import unixify from 'unixify'
 import { replaceInFileSync } from 'replace-in-file'
 
-import { getParamValue, replacePlaceholders } from './utils.js'
+import {
+  getParamValue,
+  replacePlaceholders,
+  isValidFiles,
+  isValidFrom,
+  isValidTo,
+  truncate
+} from './utils.js'
+import { loadConfig } from './config.js'
 
-const cwd = unixify(process.cwd())
+let deprecationWarned = false
 
-const isPlainObject = (obj) =>
-  obj !== null && typeof obj === 'object' && !Array.isArray(obj)
-
-const isStringifiable = (x) =>
-  x === null || typeof x === 'string' || typeof x === 'number' || typeof x === 'boolean'
-
-const isValidFiles = (v) =>
-  (typeof v === 'string' && v !== '') ||
-  (Array.isArray(v) && v.length > 0 && v.every(isStringifiable))
-
-const isValidFrom = (v) =>
-  (typeof v === 'string' && v !== '') ||
-  (Array.isArray(v) && v.length > 0 && v.every(isStringifiable))
-
-const isValidTo = (v) =>
-  typeof v === 'string' ||
-  (Array.isArray(v) && v.every(isStringifiable))
-
-const truncate = (str, max = 50) => {
-  const s = String(str)
-  return s.length <= max ? s : s.slice(0, max) + '...'
-}
-
-const easyReplaceInFiles = (opts = {}) => {
+/**
+ * Run find-and-replace rules from config.
+ * @param {Object} [opts] - Options
+ * @param {boolean} [opts.verbose] - Log each rule
+ * @param {string} [opts.cwd] - Working directory for config and relative file paths (default: process.cwd())
+ * @param {string} [opts.configPath] - Path to config file (default: easy-replace-in-files.json in cwd)
+ * @param {boolean} [opts.noExit] - If true, never call process.exit(); caller handles exit (default: false)
+ * @returns {{ succeeded: number, skipped: number, failed: number, ok: boolean }}
+ */
+function easyReplaceInFiles (opts = {}) {
   const verbose = !!opts.verbose
-  let configFile = ''
-
-  if (fs.existsSync(path.resolve(cwd, 'easy-replace-in-files.json'))) {
-    configFile = 'easy-replace-in-files.json'
-  } else {
-    console.error(`Config file not found! Please create ${chalk.yellow('easy-replace-in-files.json')} file.`)
-    process.exit(1)
-  }
-
-  const configFilePath = path.join(cwd, configFile)
+  const noExit = !!opts.noExit
+  const cwd = unixify(opts.cwd ?? process.cwd())
 
   let configData
   try {
-    configData = JSON.parse(fs.readFileSync(configFilePath, 'utf8'))
+    const loaded = loadConfig(cwd, opts.configPath)
+    configData = loaded.configData
   } catch (err) {
-    console.error('Invalid config file:', err.message)
-    process.exit(1)
-  }
-
-  if (!isPlainObject(configData)) {
-    console.error('Config file must export a plain object (e.g. { "easyReplaceInFiles": [] }).')
-    process.exit(1)
-  }
-
-  if (!Object.prototype.hasOwnProperty.call(configData, 'easyReplaceInFiles')) {
-    console.error(`${chalk.yellow('easyReplaceInFiles')} key not found in config file.`)
-    process.exit(1)
+    console.error(err.message)
+    if (!noExit) process.exit(1)
+    return { succeeded: 0, skipped: 0, failed: 0, ok: false }
   }
 
   const list = configData.easyReplaceInFiles
-  if (!Array.isArray(list)) {
-    console.error(`${chalk.yellow('easyReplaceInFiles')} must be an array of rules.`)
-    process.exit(1)
-  }
-
   let succeededCount = 0
   let skippedCount = 0
   let failedCount = 0
 
   list.forEach(function (item, index) {
     const defaults = { files: '', from: '', to: '', type: 'string' }
-
     item = { ...defaults, ...item }
 
     if (!isValidFiles(item.files)) {
@@ -85,6 +56,9 @@ const easyReplaceInFiles = (opts = {}) => {
 
     let filesValue = Array.isArray(item.files) ? item.files.map(String) : [String(item.files)]
     filesValue = filesValue.map((k) => replacePlaceholders(k))
+    if (cwd) {
+      filesValue = filesValue.map((f) => (path.isAbsolute(f) ? f : path.resolve(cwd, f)))
+    }
 
     if (!isValidFrom(item.from)) {
       skippedCount += 1
@@ -129,14 +103,30 @@ const easyReplaceInFiles = (opts = {}) => {
     }
   })
 
+  const ok = failedCount === 0
   const summary = `${succeededCount} succeeded, ${skippedCount} skipped, ${failedCount} failed.`
+
   if (failedCount > 0) {
     console.error(chalk.red(`Replacing complete with errors. ${summary}`))
-    process.exit(1)
+    if (!noExit) process.exit(1)
+  } else {
+    console.log(chalk.green(`Replacing complete. ${summary}`))
   }
 
-  console.log(chalk.green(`Replacing complete. ${summary}`))
+  return { succeeded: succeededCount, skipped: skippedCount, failed: failedCount, ok }
 }
 
-const easyRelaceInFiles = easyReplaceInFiles
+/**
+ * @deprecated Use easyReplaceInFiles instead. This typo alias will be removed in the next major version.
+ * @param {Object} [opts] - Same as easyReplaceInFiles
+ * @returns {{ succeeded: number, skipped: number, failed: number, ok: boolean }}
+ */
+function easyRelaceInFiles (opts = {}) {
+  if (!deprecationWarned) {
+    deprecationWarned = true
+    console.warn('easyRelaceInFiles is deprecated; use easyReplaceInFiles. This alias will be removed in v2.0.0.')
+  }
+  return easyReplaceInFiles(opts)
+}
+
 export { easyReplaceInFiles, easyRelaceInFiles }
