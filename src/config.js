@@ -4,7 +4,8 @@ import { fileURLToPath } from 'url'
 import chalk from 'chalk'
 import Ajv from 'ajv'
 
-const DEFAULT_CONFIG_FILE = 'easy-replace-in-files.json'
+/** Default config filenames in priority order (first existing wins when no --config is given). */
+const DEFAULT_CONFIG_FILES = ['easy-replace-in-files.json', 'easy-replace.json']
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const schemaPath = path.join(__dirname, 'schemas', 'config.schema.json')
@@ -50,14 +51,18 @@ function formatValidationErrors (errors) {
  * @throws {Error} When config file is missing, invalid JSON, or invalid shape (with clear message)
  */
 export function loadConfig (cwd, configPath) {
-  const configFilePath = configPath
-    ? path.resolve(cwd, configPath)
-    : path.join(cwd, DEFAULT_CONFIG_FILE)
+  let configFilePath
+  if (configPath) {
+    configFilePath = path.resolve(cwd, configPath)
+  } else {
+    const found = DEFAULT_CONFIG_FILES.find((name) => fs.existsSync(path.join(cwd, name)))
+    configFilePath = found ? path.join(cwd, found) : path.join(cwd, DEFAULT_CONFIG_FILES[0])
+  }
 
   if (!fs.existsSync(configFilePath)) {
     const hint = configPath
       ? `File not found: ${configFilePath}`
-      : `Config file not found. Create ${chalk.yellow(DEFAULT_CONFIG_FILE)} in the project root, or use --config <path>.`
+      : `Config file not found. Create ${chalk.yellow(DEFAULT_CONFIG_FILES[0])} or ${chalk.yellow(DEFAULT_CONFIG_FILES[1])} in the project root, or use --config <path>.`
     throw new Error(hint)
   }
 

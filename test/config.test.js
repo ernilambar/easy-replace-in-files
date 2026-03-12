@@ -17,9 +17,38 @@ describe('loadConfig', () => {
         (err) => {
           assert.ok(err.message.includes('Config file not found'))
           assert.ok(err.message.includes('easy-replace-in-files.json'))
+          assert.ok(err.message.includes('easy-replace.json'))
           return true
         }
       )
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('uses easy-replace.json when easy-replace-in-files.json is missing', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-config-'))
+    try {
+      const config = { easyReplaceInFiles: [{ files: 'x', from: 'a', to: 'b' }] }
+      fs.writeFileSync(path.join(tmp, 'easy-replace.json'), JSON.stringify(config))
+      const { configData, configFilePath } = loadConfig(tmp)
+      assert.strictEqual(configData.easyReplaceInFiles.length, 1)
+      assert.ok(configFilePath.endsWith('easy-replace.json'))
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('prefers easy-replace-in-files.json over easy-replace.json when both exist', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-config-'))
+    try {
+      const primary = { easyReplaceInFiles: [{ files: 'a', from: 'x', to: 'primary' }] }
+      const fallback = { easyReplaceInFiles: [{ files: 'b', from: 'y', to: 'fallback' }] }
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify(primary))
+      fs.writeFileSync(path.join(tmp, 'easy-replace.json'), JSON.stringify(fallback))
+      const { configData, configFilePath } = loadConfig(tmp)
+      assert.strictEqual(configData.easyReplaceInFiles[0].to, 'primary')
+      assert.ok(configFilePath.endsWith('easy-replace-in-files.json'))
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true })
     }
