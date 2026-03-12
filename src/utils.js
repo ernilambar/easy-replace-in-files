@@ -4,6 +4,29 @@ const isEmptyObject = (obj) => {
   return obj && Object.keys(obj).length === 0 && Object.getPrototypeOf(obj) === Object.prototype
 }
 
+const isPlainObject = (obj) =>
+  obj !== null && typeof obj === 'object' && !Array.isArray(obj)
+
+const isStringifiable = (x) =>
+  x === null || typeof x === 'string' || typeof x === 'number' || typeof x === 'boolean'
+
+const isValidFiles = (v) =>
+  (typeof v === 'string' && v !== '') ||
+  (Array.isArray(v) && v.length > 0 && v.every(isStringifiable))
+
+const isValidFrom = (v) =>
+  (typeof v === 'string' && v !== '') ||
+  (Array.isArray(v) && v.length > 0 && v.every(isStringifiable))
+
+const isValidTo = (v) =>
+  typeof v === 'string' ||
+  (Array.isArray(v) && v.every(isStringifiable))
+
+const truncate = (str, max = 50) => {
+  const s = String(str)
+  return s.length <= max ? s : s.slice(0, max) + '...'
+}
+
 const getParamValue = (string, mode = 'string') => {
   if (typeof string !== 'string') {
     return string
@@ -62,4 +85,14 @@ const replacePlaceholders = (string) => {
   return string
 }
 
-export { isEmptyObject, getParamValue, replacePlaceholders }
+export {
+  isEmptyObject,
+  isPlainObject,
+  isStringifiable,
+  isValidFiles,
+  isValidFrom,
+  isValidTo,
+  truncate,
+  getParamValue,
+  replacePlaceholders
+}
