@@ -234,4 +234,25 @@ describe('easyReplaceInFiles (programmatic)', () => {
       fs.rmSync(tmp, { recursive: true, force: true })
     }
   })
+
+  it('dryRun does not write to files; returns ok and counts rule as succeeded', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
+        easyReplaceInFiles: [
+          { files: 'f.txt', from: 'REPLACE_ME', to: 'DONE' }
+        ]
+      }))
+      fs.writeFileSync(path.join(tmp, 'f.txt'), 'before REPLACE_ME after')
+
+      const result = easyReplaceInFiles({ cwd: tmp, noExit: true, dryRun: true })
+
+      assert.strictEqual(result.ok, true)
+      assert.strictEqual(result.succeeded, 1)
+      assert.strictEqual(result.failed, 0)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), 'before REPLACE_ME after')
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
 })

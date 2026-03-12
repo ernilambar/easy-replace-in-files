@@ -252,4 +252,41 @@ describe('CLI', () => {
       fs.rmSync(tmp, { recursive: true, force: true })
     }
   })
+
+  it('--dry-run exits 0 and does not modify files', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-cli-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
+        easyReplaceInFiles: [{ files: 'target.txt', from: 'OLD', to: 'NEW' }]
+      }))
+      fs.writeFileSync(path.join(tmp, 'target.txt'), 'OLD')
+
+      const result = spawnSync(process.execPath, [indexPath, '--dry-run'], {
+        cwd: tmp,
+        encoding: 'utf8'
+      })
+
+      assert.strictEqual(result.status, 0)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'target.txt'), 'utf8'), 'OLD')
+      assert.ok(result.stdout.includes('Dry run'))
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('--help exits 0 and prints usage to stdout', () => {
+    const result = spawnSync(process.execPath, [indexPath, '--help'], { encoding: 'utf8' })
+    assert.strictEqual(result.status, 0)
+    assert.ok(result.stdout.includes('easy-replace-in-files'))
+    assert.ok(result.stdout.includes('--config'))
+    assert.ok(result.stdout.includes('--dry-run'))
+    assert.ok(result.stdout.includes('--help'))
+    assert.ok(result.stdout.includes('--version'))
+  })
+
+  it('--version exits 0 and prints version to stdout', () => {
+    const result = spawnSync(process.execPath, [indexPath, '--version'], { encoding: 'utf8' })
+    assert.strictEqual(result.status, 0)
+    assert.match(result.stdout.trim(), /^\d+\.\d+\.\d+$/)
+  })
 })
