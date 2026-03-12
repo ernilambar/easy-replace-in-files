@@ -141,7 +141,7 @@ describe('CLI', () => {
     }
   })
 
-  it('skips invalid rule and continues; summary shows skipped', () => {
+  it('invalid rule in config fails validation; exits 1 with message', () => {
     const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-cli-test-'))
     try {
       fs.writeFileSync(path.join(tmp, 'ok.txt'), 'x')
@@ -155,9 +155,9 @@ describe('CLI', () => {
       fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify(config))
 
       const result = spawnSync(process.execPath, [indexPath], { cwd: tmp, encoding: 'utf8' })
-      assert.strictEqual(result.status, 0)
-      assert.ok(result.stdout.includes('succeeded') && result.stdout.includes('skipped'))
-      assert.strictEqual(fs.readFileSync(path.join(tmp, 'ok.txt'), 'utf8'), 'z')
+      assert.strictEqual(result.status, 1)
+      assert.ok(result.stderr.includes('Config validation failed'))
+      assert.ok(result.stderr.includes('Rule 2') && result.stderr.includes('files'))
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true })
     }

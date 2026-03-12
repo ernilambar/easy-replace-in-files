@@ -1,9 +1,40 @@
 import fs from 'fs'
 import path from 'path'
+import { fileURLToPath } from 'url'
 import chalk from 'chalk'
-import { isPlainObject } from './utils.js'
+import Ajv from 'ajv'
 
 const DEFAULT_CONFIG_FILE = 'easy-replace-in-files.json'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const schemaPath = path.join(__dirname, 'schemas', 'config.schema.json')
+const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'))
+
+const ajv = new Ajv({ allErrors: true })
+const validateConfig = ajv.compile(schema)
+
+/**
+ * Format Ajv validation errors into a readable message (one line per error).
+ * @param {import('ajv').ErrorObject[]} errors
+ * @returns {string}
+ */
+function formatValidationErrors (errors) {
+  const lines = errors.map((e) => {
+    const segments = e.instancePath.split('/').filter(Boolean)
+    const fieldName = e.params?.missingProperty ?? (segments.length >= 3 ? segments[2] : null)
+
+    if (segments.length >= 2) {
+      const ruleNum = Number(segments[1]) + 1
+      const fieldPart = fieldName ? `, field ${chalk.yellow(fieldName)}` : ''
+      return `  Rule ${ruleNum}${fieldPart}: ${e.message}`
+    }
+    if (segments.length === 1) {
+      return `  ${chalk.yellow(segments[0])}: ${e.message}`
+    }
+    return `  ${e.message}`
+  })
+  return `${chalk.red('Config validation failed:')}\n${lines.join('\n')}`
+}
 
 /**
  * @typedef {Object} LoadConfigResult
@@ -16,7 +47,7 @@ const DEFAULT_CONFIG_FILE = 'easy-replace-in-files.json'
  * @param {string} cwd - Working directory for resolving relative config path
  * @param {string} [configPath] - Optional path to config file (relative to cwd or absolute)
  * @returns {LoadConfigResult}
- * @throws {Error} When config file is missing, invalid JSON, or wrong shape (with clear message)
+ * @throws {Error} When config file is missing, invalid JSON, or invalid shape (with clear message)
  */
 export function loadConfig (cwd, configPath) {
   const configFilePath = configPath
@@ -44,23 +75,9 @@ export function loadConfig (cwd, configPath) {
     throw new Error(`Invalid JSON in config file: ${err.message}`)
   }
 
-  if (!isPlainObject(configData)) {
-    throw new Error(
-      'Config must be a plain object. Expected shape: { "easyReplaceInFiles": [] }'
-    )
-  }
-
-  if (!Object.prototype.hasOwnProperty.call(configData, 'easyReplaceInFiles')) {
-    throw new Error(
-      `Config must include key ${chalk.yellow('easyReplaceInFiles')}. Expected shape: { "easyReplaceInFiles": [] }`
-    )
-  }
-
-  const list = configData.easyReplaceInFiles
-  if (!Array.isArray(list)) {
-    throw new Error(
-      `Config key ${chalk.yellow('easyReplaceInFiles')} must be an array of rules, got ${typeof list}.`
-    )
+  const valid = validateConfig(configData)
+  if (!valid) {
+    throw new Error(formatValidationErrors(validateConfig.errors))
   }
 
   return { configData, configFilePath }
