@@ -105,14 +105,16 @@ function easyReplaceInFiles (opts = {}) {
 
     try {
       const results = replaceInFileSync(options)
+      const changed = results.filter((r) => r.hasChanged)
       if (dryRun) {
-        const changed = results.filter((r) => r.hasChanged)
         if (changed.length > 0) {
           console.log(chalk.yellow(`Rule ${index + 1}: ${changed.length} file(s) would be changed`))
           if (verbose) {
             changed.forEach((r) => console.log(chalk.gray(`  - ${r.file}`)))
           }
         }
+      } else if (verbose) {
+        console.log(chalk.gray(`  ${changed.length} file(s) changed`))
       }
       succeededCount += 1
     } catch (error) {
