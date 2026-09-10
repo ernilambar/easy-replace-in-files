@@ -36,8 +36,8 @@
     "url": "git+https://github.com/ernilambar/easy-replace-in-files.git"
   },
   "scripts": {
-    "lint": "standard",
-    "format": "standard --fix",
+    "lint": "eslint .",
+    "format": "eslint . --fix",
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
@@ -49,12 +49,10 @@
     "unixify": "^1.0.0"
   },
   "devDependencies": {
-    "standard": "^17.1.0"
+    "eslint": "^9.39.5",
+    "neostandard": "^0.13.0"
   },
   "engines": {
-    "node": ">=20"
-  },
-  "standard": {
-    "globals": []
+    "node": ">=22"
   }
 }
