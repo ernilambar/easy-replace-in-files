@@ -2,8 +2,6 @@
 
 Find and replace in files via a config file. Supports globs, regex, and placeholders (`$$ENV_VAR$$`, `$$package__version$$`).
 
-**Requires Node 20+.**
-
 ## Install
 
 ```sh

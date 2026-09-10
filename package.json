@@ -14,30 +14,30 @@
     "version-bump",
     "build"
   ],
+  "homepage": "https://github.com/ernilambar/easy-replace-in-files#readme",
+  "bugs": {
+    "url": "https://github.com/ernilambar/easy-replace-in-files/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ernilambar/easy-replace-in-files.git"
+  },
+  "license": "MIT",
+  "author": "Nilambar Sharma <nilambar@outlook.com> (https://github.com/ernilambar)",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "easy-replace-in-files": "index.js"
+  },
   "files": [
     "index.js",
     "src",
     "README.md",
     "CHANGELOG.md"
   ],
-  "homepage": "https://github.com/ernilambar/easy-replace-in-files#readme",
-  "bugs": {
-    "url": "https://github.com/ernilambar/easy-replace-in-files/issues"
-  },
-  "license": "MIT",
-  "author": "Nilambar Sharma <nilambar@outlook.com> (https://github.com/ernilambar)",
-  "main": "index.js",
-  "type": "module",
-  "bin": {
-    "easy-replace-in-files": "index.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ernilambar/easy-replace-in-files.git"
-  },
   "scripts": {
-    "lint": "standard",
-    "format": "standard --fix",
+    "format": "xo --fix",
+    "lint": "xo",
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
@@ -49,12 +49,9 @@
     "unixify": "^1.0.0"
   },
   "devDependencies": {
-    "standard": "^17.1.0"
+    "xo": "^4.0.0"
   },
   "engines": {
-    "node": ">=20"
-  },
-  "standard": {
-    "globals": []
+    "node": ">=22"
   }
 }
