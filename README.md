@@ -74,4 +74,4 @@ Regex, multiple files/globs, multiple from/to, and placeholders (`$$ENV_VAR$$`, 
 
 ## License
 
-[MIT](https://opensource.org/licenses/MIT)
+[MIT](LICENSE)
