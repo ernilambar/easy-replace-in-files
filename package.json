@@ -40,18 +40,22 @@
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
-    "ajv": "^8.18.0",
-    "chalk": "^5.6.2",
+    "ajv": "^8.20.0",
+    "chalk": "^6.0.1",
     "minimist": "^1.2.8",
-    "read-pkg-up": "^10.1.0",
-    "replace-in-file": "^8.4.0",
+    "read-package-up": "^12.0.0",
+    "replace-in-file": "^9.0.0",
     "unixify": "^1.0.0"
   },
   "devDependencies": {
-    "eslint": "^9.39.5",
-    "neostandard": "^0.13.0"
+    "eslint": "^10.14.0",
+    "neostandard": "^0.14.1"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13.0"
+  },
+  "overrides": {
+    "glob": "^14.0.3",
+    "minimatch": "^11.0.3"
   }
 }

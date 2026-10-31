@@ -2,7 +2,7 @@
 
 Find and replace in files via a config file. Supports globs, regex, and placeholders (`$$ENV_VAR$$`, `$$package__version$$`).
 
-**Requires Node 20+.**
+**Requires Node 22.13+.**
 
 ## Install
 

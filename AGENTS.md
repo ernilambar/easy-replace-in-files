@@ -2,12 +2,12 @@
 
 ## Overview
 
-`easy-replace-in-files` is a Node 22+ ESM CLI that runs find-and-replace rules from a JSON config. Core stack: Node ESM, `replace-in-file`, `minimist`, `ajv`, `chalk`, `neostandard` lint, `node:test`.
+`easy-replace-in-files` is a Node 22.13+ ESM CLI that runs find-and-replace rules from a JSON config. Core stack: Node ESM, `replace-in-file`, `minimist`, `ajv`, `chalk`, `neostandard` lint, `node:test`.
 
 ## Setup
 
 ```sh
-node --version # must be >=22
+node --version # must be >=22.13
 npm ci
 ```
 

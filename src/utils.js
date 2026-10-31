@@ -1,4 +1,4 @@
-import { readPackageUpSync } from 'read-pkg-up'
+import { readPackageUpSync } from 'read-package-up'
 
 /**
  * @param {unknown} obj
