@@ -1,12 +1,14 @@
 # Changelog
 
-## Unreleased
-- Changed: Require Node.js 22.13+.
-- Changed: Replaced deprecated `read-pkg-up` with `read-package-up`.
-- Updated: `replace-in-file` 9, `chalk` 6, `ajv` 8.20, `unixify` 1.
-- Updated (dev): `eslint` 10, `neostandard` 0.14 (ESLint 10 support).
-- Security: Added `overrides` pinning `glob` 14 and `minimatch` 11 to clear
-  GHSA-3g3m-2fjr-6pw4 and GHSA-g3hv-75wg-m249 (`npm audit` now reports 0).
+## X.X.X - YYYY-MM-DD
+- Changed: String mode replaces all occurrences (breaking).
+- Changed: Invalid regex fails the rule (breaking).
+- Changed: `from`/`to` length mismatch skips the rule (breaking).
+- Changed: Unresolved placeholders in `to` kept as-is (breaking).
+- Changed: Require Node.js 22.13+ (breaking).
+- Fixed: Empty `files`/`from` array items rejected.
+- Fixed: Placeholder values inserted literally (`$&`, `$1`, `$$`).
+- Fixed: `package__*` reads `package.json` from `cwd`.
 
 ## 2.0.0 - 2026-03-12
 - Added: Config validation via JSON Schema; invalid config fails at load.
