@@ -1,6 +1,6 @@
 {
   "name": "easy-replace-in-files",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "CLI to find and replace in files via a JSON config. Supports globs, regex, and placeholders (e.g. $$package__version$$, $$ENV_VAR$$). Great for version bumps and build-time replacements.",
   "keywords": [
     "replace",

@@ -1,11 +1,10 @@
 # Changelog
 
-## X.X.X - YYYY-MM-DD
+## 3.0.0 - 2026-11-04
 - Changed: String mode replaces all occurrences (breaking).
 - Changed: Invalid regex fails the rule (breaking).
 - Changed: `from`/`to` length mismatch skips the rule (breaking).
 - Changed: Unresolved placeholders in `to` kept as-is (breaking).
-- Changed: Require Node.js 22.13+ (breaking).
 - Fixed: Empty `files`/`from` array items rejected.
 - Fixed: Placeholder values inserted literally (`$&`, `$1`, `$$`).
 - Fixed: `package__*` reads `package.json` from `cwd`.
