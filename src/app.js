@@ -2,13 +2,11 @@ import path from 'path'
 import chalk from 'chalk'
 import unixify from 'unixify'
 import { replaceInFileSync } from 'replace-in-file'
+import { readPackageUpSync } from 'read-package-up'
 
 import {
   getParamValue,
   replacePlaceholders,
-  isValidFiles,
-  isValidFrom,
-  isValidTo,
   truncate
 } from './utils.js'
 import { loadConfig } from './config.js'
@@ -46,47 +44,44 @@ function easyReplaceInFiles (opts = {}) {
     return { succeeded: 0, skipped: 0, failed: 0, ok: false }
   }
 
+  let pkg
+  try {
+    pkg = readPackageUpSync({ cwd })?.packageJson
+  } catch {
+    pkg = undefined
+  }
+
   const list = configData.easyReplaceInFiles
   let succeededCount = 0
   let skippedCount = 0
   let failedCount = 0
 
   list.forEach(function (item, index) {
-    const defaults = { files: '', from: '', to: '', type: 'string' }
-    item = { ...defaults, ...item }
+    let filesValue = Array.isArray(item.files) ? item.files : [item.files]
+    filesValue = filesValue.map((k) => replacePlaceholders(k, { pkg }))
+    filesValue = filesValue.map((f) => (path.isAbsolute(f) ? f : path.resolve(cwd, f)))
 
-    if (!isValidFiles(item.files)) {
-      skippedCount += 1
-      console.log(`${chalk.cyan('WARN')}: rule ${index + 1}: ${chalk.yellow('files')} must be a non-empty string or non-empty array of strings. Skipping.`)
+    const fromStrings = Array.isArray(item.from) ? item.from : [item.from]
+    let fromValue
+    try {
+      fromValue = fromStrings.map((element) => getParamValue(element, item.type))
+    } catch (error) {
+      failedCount += 1
+      console.error(`Error in rule ${index + 1}:`, error.message)
       return
     }
 
-    let filesValue = Array.isArray(item.files) ? item.files.map(String) : [String(item.files)]
-    filesValue = filesValue.map((k) => replacePlaceholders(k))
-    if (cwd) {
-      filesValue = filesValue.map((f) => (path.isAbsolute(f) ? f : path.resolve(cwd, f)))
-    }
-
-    if (!isValidFrom(item.from)) {
+    if (Array.isArray(item.to) && item.to.length !== fromStrings.length) {
       skippedCount += 1
-      console.log(`${chalk.cyan('WARN')}: rule ${index + 1}: ${chalk.yellow('from')} must be a non-empty string or non-empty array of strings. Skipping.`)
-      return
-    }
-
-    let fromValue = Array.isArray(item.from) ? item.from.map(String) : [String(item.from)]
-    fromValue = fromValue.map((element) => getParamValue(element, item.type))
-
-    if (!isValidTo(item.to)) {
-      skippedCount += 1
-      console.log(`${chalk.cyan('WARN')}: rule ${index + 1}: ${chalk.yellow('to')} must be a string or array of strings. Skipping.`)
+      console.log(`${chalk.cyan('WARN')}: rule ${index + 1}: ${chalk.yellow('from')} and ${chalk.yellow('to')} must have the same number of items. Skipping.`)
       return
     }
 
     let toValue
     if (Array.isArray(item.to)) {
-      toValue = item.to.map((element) => replacePlaceholders(String(element)))
+      toValue = item.to.map((element) => replacePlaceholders(element, { escapeDollar: true, pkg }))
     } else {
-      toValue = replacePlaceholders(String(item.to))
+      toValue = replacePlaceholders(item.to, { escapeDollar: true, pkg })
     }
 
     const options = {
@@ -98,7 +93,7 @@ function easyReplaceInFiles (opts = {}) {
     }
 
     if (verbose) {
-      const fromPreview = fromValue.length === 1 ? truncate(fromValue[0]) : fromValue.map(truncate).join(', ')
+      const fromPreview = fromStrings.length === 1 ? truncate(fromStrings[0]) : fromStrings.map((f) => truncate(f)).join(', ')
       const toPreview = Array.isArray(toValue) ? toValue.map(truncate).join(', ') : truncate(toValue)
       console.log(chalk.gray(`Rule ${index + 1}: files=${filesValue.join(', ')} from=${fromPreview} to=${toPreview}`))
     }

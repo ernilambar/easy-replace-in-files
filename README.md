@@ -14,6 +14,21 @@ npm install --save-dev easy-replace-in-files
 
 Add `easy-replace-in-files.json` (or the shorter `easy-replace.json`) in your project root. If both exist, `easy-replace-in-files.json` is used. Each rule has `files`, `from`, and `to`; `type` defaults to `"string"`. Rule shape: `files` (string or array of strings), `from` (string or array), `to` (string or array), `type` (`"string"` or `"regex"`).
 
+### Matching
+
+- `"string"` matches literally and replaces **all** occurrences. `$&` in `to` still inserts the match.
+- `"regex"` patterns run with the `g` flag; `to` can use `$1`, `$&`, etc. An invalid pattern fails the rule.
+- Array `from` pairs with array `to` by index; lengths must match or the rule is skipped. A string `to` applies to every `from` item.
+
+### Placeholders
+
+Expanded in `files` and `to`:
+
+- `$$ENV_VAR$$`: environment variable.
+- `$$package__field$$`: top-level string/number/boolean field from the `package.json` nearest the working directory.
+
+Values are inserted literally (`$` in a value is not a replacement pattern). Unresolved placeholders are left as-is.
+
 ### Basic example
 
 ```json

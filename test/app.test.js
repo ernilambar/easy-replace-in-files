@@ -80,21 +80,22 @@ describe('easyReplaceInFiles (programmatic)', () => {
     }
   })
 
-  it('rule with invalid regex does not crash; falls back to literal string replace', () => {
+  it('rule with invalid regex fails without crashing; file untouched, other rules still run', () => {
     const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
     try {
       fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
         easyReplaceInFiles: [
-          { files: 'f.txt', from: '[unclosed', type: 'regex', to: 'FIXED' }
+          { files: 'f.txt', from: '[unclosed', type: 'regex', to: 'FIXED' },
+          { files: 'f.txt', from: 'after', to: 'later' }
         ]
       }))
       fs.writeFileSync(path.join(tmp, 'f.txt'), 'before [unclosed after')
 
       const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
       assert.strictEqual(result.succeeded, 1)
-      assert.strictEqual(result.failed, 0)
-      assert.strictEqual(result.ok, true)
-      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), 'before FIXED after')
+      assert.strictEqual(result.failed, 1)
+      assert.strictEqual(result.ok, false)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), 'before [unclosed later')
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true })
     }
@@ -132,19 +133,153 @@ describe('easyReplaceInFiles (programmatic)', () => {
     }
   })
 
-  it('from/to array length mismatch: extra from uses undefined replacement (no throw)', () => {
+  it('from/to item count mismatch: rule skipped with WARN, file untouched', (t) => {
+    const log = t.mock.method(console, 'log', () => {})
     const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
     try {
       fs.writeFileSync(path.join(tmp, 'f.txt'), 'A B C')
       fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
         easyReplaceInFiles: [
-          { files: 'f.txt', from: ['A', 'B', 'C'], to: ['1', '2'] }
+          { files: 'f.txt', from: ['A', 'B', 'C'], to: ['1', '2'] },
+          { files: 'f.txt', from: 'A', to: ['1', '2'] },
+          { files: 'f.txt', from: 'A', to: [] }
         ]
       }))
       const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
-      assert.strictEqual(result.succeeded, 1)
+      assert.strictEqual(result.succeeded, 0)
+      assert.strictEqual(result.skipped, 3)
       assert.strictEqual(result.failed, 0)
-      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), '1 2 C')
+      assert.strictEqual(result.ok, true)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), 'A B C')
+      const warnings = log.mock.calls.map((c) => String(c.arguments[0])).filter((m) => m.includes('WARN'))
+      assert.strictEqual(warnings.length, 3)
+      warnings.forEach((m, i) => assert.ok(m.includes(`rule ${i + 1}`) && m.includes('same number of items')))
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('string to with array from applies to every from item', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'f.txt'), 'A B C')
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
+        easyReplaceInFiles: [{ files: 'f.txt', from: ['A', 'B'], to: 'X' }]
+      }))
+      const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
+      assert.strictEqual(result.succeeded, 1)
+      assert.strictEqual(result.skipped, 0)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), 'X X C')
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('string mode replaces all occurrences, metacharacters literal', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'f.txt'), 'X X X a.b axb')
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
+        easyReplaceInFiles: [
+          { files: 'f.txt', from: 'X', to: 'Y' },
+          { files: 'f.txt', from: ['a.b'], to: ['Z'] }
+        ]
+      }))
+      const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
+      assert.strictEqual(result.ok, true)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), 'Y Y Y Z axb')
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('empty string in from/files array fails validation; file untouched', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'f.txt'), 'hello')
+      for (const rule of [
+        { files: 'f.txt', from: [''], to: 'INJECT' },
+        { files: [''], from: 'hello', to: 'x' }
+      ]) {
+        fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({ easyReplaceInFiles: [rule] }))
+        const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
+        assert.strictEqual(result.ok, false)
+        assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), 'hello')
+      }
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('placeholder values with $ patterns are written literally; template backrefs still work', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
+    const key = 'APP_DOLLAR_' + Date.now()
+    process.env[key] = "[$&-$1-$'-$$]"
+    try {
+      fs.writeFileSync(path.join(tmp, 'f.txt'), 'v=X ver=1.2')
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
+        easyReplaceInFiles: [
+          { files: 'f.txt', from: 'X', to: `$$${key}$$` },
+          { files: 'f.txt', from: 'ver=(\\d)', type: 'regex', to: `ver=$1:$$${key}$$` }
+        ]
+      }))
+      const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
+      assert.strictEqual(result.ok, true)
+      assert.strictEqual(
+        fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'),
+        "v=[$&-$1-$'-$$] ver=1:[$&-$1-$'-$$].2"
+      )
+    } finally {
+      delete process.env[key]
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('placeholder in files path with $ is used literally', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
+    const key = 'APP_FILE_' + Date.now()
+    process.env[key] = 'a$&b'
+    try {
+      fs.writeFileSync(path.join(tmp, 'a$&b.txt'), 'X')
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
+        easyReplaceInFiles: [{ files: `$$${key}$$.txt`, from: 'X', to: 'Y' }]
+      }))
+      const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
+      assert.strictEqual(result.ok, true)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'a$&b.txt'), 'utf8'), 'Y')
+    } finally {
+      delete process.env[key]
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('package__ placeholders resolve from package.json nearest to cwd, not process.cwd()', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'package.json'), JSON.stringify({ name: 'inner-pkg', version: '9.9.9', repository: { url: 'x' } }))
+      fs.writeFileSync(path.join(tmp, 'f.txt'), 'N V R')
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
+        easyReplaceInFiles: [{ files: 'f.txt', from: ['N', 'V', 'R'], to: ['$$package__name$$', '$$package__version$$', '$$package__repository$$'] }]
+      }))
+      const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
+      assert.strictEqual(result.ok, true)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), 'inner-pkg 9.9.9 $$package__repository$$')
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('unresolved placeholder in to is written verbatim', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
+    const key = 'APP_UNSET_' + Date.now()
+    try {
+      fs.writeFileSync(path.join(tmp, 'f.txt'), 'X')
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
+        easyReplaceInFiles: [{ files: 'f.txt', from: 'X', to: `a $$${key}$$ b` }]
+      }))
+      const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
+      assert.strictEqual(result.ok, true)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), `a $$${key}$$ b`)
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true })
     }
