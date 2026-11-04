@@ -16,7 +16,7 @@ Add `easy-replace-in-files.json` (or the shorter `easy-replace.json`) in your pr
 
 ### Matching
 
-- `"string"` matches literally and replaces **all** occurrences.
+- `"string"` matches literally and replaces **all** occurrences. `$&` in `to` still inserts the match.
 - `"regex"` patterns run with the `g` flag; `to` can use `$1`, `$&`, etc. An invalid pattern fails the rule.
 - Array `from` pairs with array `to` by index; lengths must match or the rule is skipped. A string `to` applies to every `from` item.
 

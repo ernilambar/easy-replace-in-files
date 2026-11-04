@@ -191,15 +191,22 @@ describe('replacePlaceholders', () => {
     }
   })
 
-  it('resolves package__ from given pkg; scalars only', () => {
+  it('resolves package__ from given pkg; scalars only, WARN on non-scalar', (t) => {
+    const log = t.mock.method(console, 'log', () => {})
     const pkg = { name: 'p', version: '1.2.3', private: true, n: 7, repository: { url: 'x' }, keywords: ['a'] }
     assert.strictEqual(
       replacePlaceholders('$$package__name$$@$$package__version$$ $$package__private$$ $$package__n$$', { pkg }),
       'p@1.2.3 true 7'
     )
+    assert.strictEqual(replacePlaceholders('$$package__missing$$', { pkg }), '$$package__missing$$')
+    assert.strictEqual(log.mock.callCount(), 0)
+
     assert.strictEqual(replacePlaceholders('$$package__repository$$', { pkg }), '$$package__repository$$')
     assert.strictEqual(replacePlaceholders('$$package__keywords$$', { pkg }), '$$package__keywords$$')
-    assert.strictEqual(replacePlaceholders('$$package__missing$$', { pkg }), '$$package__missing$$')
+    const warnings = log.mock.calls.map((c) => c.arguments[0])
+    assert.strictEqual(warnings.length, 2)
+    assert.ok(warnings[0].includes('WARN') && warnings[0].includes('$$package__repository$$') && warnings[0].includes('not a string, number, or boolean'))
+    assert.ok(warnings[1].includes('$$package__keywords$$'))
   })
 
   it('leaves package__ placeholder when no pkg given', () => {

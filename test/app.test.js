@@ -133,7 +133,8 @@ describe('easyReplaceInFiles (programmatic)', () => {
     }
   })
 
-  it('from/to item count mismatch: rule skipped with WARN, file untouched', () => {
+  it('from/to item count mismatch: rule skipped with WARN, file untouched', (t) => {
+    const log = t.mock.method(console, 'log', () => {})
     const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
     try {
       fs.writeFileSync(path.join(tmp, 'f.txt'), 'A B C')
@@ -150,6 +151,9 @@ describe('easyReplaceInFiles (programmatic)', () => {
       assert.strictEqual(result.failed, 0)
       assert.strictEqual(result.ok, true)
       assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), 'A B C')
+      const warnings = log.mock.calls.map((c) => String(c.arguments[0])).filter((m) => m.includes('WARN'))
+      assert.strictEqual(warnings.length, 3)
+      warnings.forEach((m, i) => assert.ok(m.includes(`rule ${i + 1}`) && m.includes('same number of items')))
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true })
     }
