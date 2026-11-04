@@ -80,8 +80,9 @@ describe('isValidFiles', () => {
     assert.strictEqual(isValidFiles(['x']), true)
   })
 
-  it('returns true for array with one empty string (elements only need to be stringifiable)', () => {
-    assert.strictEqual(isValidFiles(['']), true)
+  it('returns false for array with an empty string element', () => {
+    assert.strictEqual(isValidFiles(['']), false)
+    assert.strictEqual(isValidFiles(['a', '']), false)
   })
 
   it('returns false for array with non-stringifiable element', () => {
@@ -107,8 +108,9 @@ describe('isValidFrom', () => {
     assert.strictEqual(isValidFrom(['a', 'b']), true)
   })
 
-  it('returns true for array with one empty string (elements only need to be stringifiable)', () => {
-    assert.strictEqual(isValidFrom(['']), true)
+  it('returns false for array with an empty string element', () => {
+    assert.strictEqual(isValidFrom(['']), false)
+    assert.strictEqual(isValidFrom(['a', '']), false)
   })
 })
 
@@ -184,13 +186,20 @@ describe('isEmptyObject', () => {
 })
 
 describe('getParamValue', () => {
-  it('returns string as-is when mode is string', () => {
-    assert.strictEqual(getParamValue('hello'), 'hello')
-    assert.strictEqual(getParamValue('foo bar'), 'foo bar')
+  it('returns global literal RegExp when mode is string', () => {
+    const result = getParamValue('foo', 'string')
+    assert(result instanceof RegExp)
+    assert.strictEqual(result.global, true)
+    assert.strictEqual('foo foo foo'.replace(result, 'X'), 'X X X')
   })
 
-  it('returns string as-is when mode is default', () => {
-    assert.strictEqual(getParamValue('x'), 'x')
+  it('defaults to string mode', () => {
+    assert.strictEqual('x x'.replace(getParamValue('x'), 'y'), 'y y')
+  })
+
+  it('string mode matches regex metacharacters literally', () => {
+    const result = getParamValue('a.b(c)[d]*$', 'string')
+    assert.strictEqual('a.b(c)[d]*$ axb(c)'.replace(result, 'Z'), 'Z axb(c)')
   })
 
   it('returns RegExp when mode is regex and pattern is valid', () => {
@@ -211,12 +220,8 @@ describe('getParamValue', () => {
     assert.strictEqual(getParamValue(null), null)
   })
 
-  it('returns empty string as-is in string mode', () => {
-    assert.strictEqual(getParamValue('', 'string'), '')
-  })
-
   it('handles unknown mode like string mode', () => {
-    assert.strictEqual(getParamValue('x', 'unknown'), 'x')
+    assert.strictEqual('a.a'.replace(getParamValue('.', 'unknown'), '-'), 'a-a')
   })
 
   it('handles regex with special chars that need escaping', () => {
@@ -291,6 +296,49 @@ describe('replacePlaceholders', () => {
     process.env[key] = '$1.0'
     try {
       assert.strictEqual(replacePlaceholders(`ver: $$${key}$$`), 'ver: $1.0')
+    } finally {
+      delete process.env[key]
+    }
+  })
+
+  it('inserts env value literally ($& and $\' not interpreted)', () => {
+    const key = 'DOLLAR_' + Date.now()
+    process.env[key] = "[$&-$'-$$]"
+    try {
+      assert.strictEqual(replacePlaceholders(`v=$$${key}$$`), "v=[$&-$'-$$]")
+    } finally {
+      delete process.env[key]
+    }
+  })
+
+  it('escapeDollar doubles $ in values only, not in the template', () => {
+    const key = 'ESC_' + Date.now()
+    process.env[key] = '$1'
+    try {
+      assert.strictEqual(replacePlaceholders(`$2-$$${key}$$`, { escapeDollar: true }), '$2-$$1')
+    } finally {
+      delete process.env[key]
+    }
+  })
+
+  it('does not expand placeholders inside substituted values', () => {
+    const a = 'CHAIN_A_' + Date.now()
+    const b = 'CHAIN_B_' + Date.now()
+    process.env[a] = `$$${b}$$`
+    process.env[b] = 'secret'
+    try {
+      assert.strictEqual(replacePlaceholders(`$$${a}$$ $$${b}$$`), `$$${b}$$ secret`)
+    } finally {
+      delete process.env[a]
+      delete process.env[b]
+    }
+  })
+
+  it('replaces repeated placeholder everywhere', () => {
+    const key = 'REPEAT_' + Date.now()
+    process.env[key] = 'r'
+    try {
+      assert.strictEqual(replacePlaceholders(`$$${key}$$/$$${key}$$`), 'r/r')
     } finally {
       delete process.env[key]
     }

@@ -28,7 +28,7 @@ const isStringifiable = (x) =>
  */
 const isValidFiles = (v) =>
   (typeof v === 'string' && v !== '') ||
-  (Array.isArray(v) && v.length > 0 && v.every(isStringifiable))
+  (Array.isArray(v) && v.length > 0 && v.every((x) => isStringifiable(x) && x !== ''))
 
 /**
  * @param {unknown} v
@@ -36,7 +36,7 @@ const isValidFiles = (v) =>
  */
 const isValidFrom = (v) =>
   (typeof v === 'string' && v !== '') ||
-  (Array.isArray(v) && v.length > 0 && v.every(isStringifiable))
+  (Array.isArray(v) && v.length > 0 && v.every((x) => isStringifiable(x) && x !== ''))
 
 /**
  * @param {unknown} v
@@ -58,6 +58,13 @@ const truncate = (str, max = 50) => {
 
 /**
  * @param {string} string
+ * @returns {string}
+ */
+const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/**
+ * String mode matches literally but globally (all occurrences).
+ * @param {string} string
  * @param {string} [mode='string']
  * @returns {string|RegExp}
  */
@@ -74,36 +81,26 @@ const getParamValue = (string, mode = 'string') => {
     }
   }
 
-  return string
+  return new RegExp(escapeRegex(string), 'g')
 }
 
 /**
+ * Expand $$ENV_VAR$$ and $$package__field$$ in a single pass; values are inserted literally.
  * @param {string} string
+ * @param {{ escapeDollar?: boolean }} [opts] - Escape `$` in values so a later String.replace() keeps them literal (use for `to`)
  * @returns {string}
  */
-const replacePlaceholders = (string) => {
+const replacePlaceholders = (string, { escapeDollar = false } = {}) => {
   if (typeof string !== 'string') {
     return string
   }
 
-  const matches = string.match(/\$\$(.*?)\$\$/g)
+  return string.replace(/\$\$(.*?)\$\$/g, (match, item) => {
+    let value
 
-  if (!Array.isArray(matches) || matches.length === 0) {
-    return string
-  }
-
-  const keys = []
-
-  matches.forEach(function (matchItem) {
-    keys.push(matchItem.replace(/\$\$/g, ''))
-  })
-
-  keys.forEach(function (item) {
     if (Object.prototype.hasOwnProperty.call(process.env, item)) {
-      string = string.replace(`$$${item}$$`, process.env[item])
-    }
-
-    if (item.includes('package__')) {
+      value = process.env[item]
+    } else if (item.includes('package__')) {
       const pvar = item.replace('package__', '')
 
       let pkg
@@ -115,12 +112,17 @@ const replacePlaceholders = (string) => {
       }
 
       if (pkg && Object.prototype.hasOwnProperty.call(pkg, pvar)) {
-        string = string.replace(`$$${item}$$`, pkg[pvar])
+        value = pkg[pvar]
       }
     }
-  })
 
-  return string
+    if (value === undefined) {
+      return match
+    }
+
+    const str = String(value)
+    return escapeDollar ? str.replaceAll('$', '$$$$') : str
+  })
 }
 
 export {
@@ -131,6 +133,7 @@ export {
   isValidFrom,
   isValidTo,
   truncate,
+  escapeRegex,
   getParamValue,
   replacePlaceholders
 }

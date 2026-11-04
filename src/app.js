@@ -73,8 +73,8 @@ function easyReplaceInFiles (opts = {}) {
       return
     }
 
-    let fromValue = Array.isArray(item.from) ? item.from.map(String) : [String(item.from)]
-    fromValue = fromValue.map((element) => getParamValue(element, item.type))
+    const fromStrings = Array.isArray(item.from) ? item.from.map(String) : [String(item.from)]
+    const fromValue = fromStrings.map((element) => getParamValue(element, item.type))
 
     if (!isValidTo(item.to)) {
       skippedCount += 1
@@ -84,9 +84,9 @@ function easyReplaceInFiles (opts = {}) {
 
     let toValue
     if (Array.isArray(item.to)) {
-      toValue = item.to.map((element) => replacePlaceholders(String(element)))
+      toValue = item.to.map((element) => replacePlaceholders(String(element), { escapeDollar: true }))
     } else {
-      toValue = replacePlaceholders(String(item.to))
+      toValue = replacePlaceholders(String(item.to), { escapeDollar: true })
     }
 
     const options = {
@@ -98,7 +98,7 @@ function easyReplaceInFiles (opts = {}) {
     }
 
     if (verbose) {
-      const fromPreview = fromValue.length === 1 ? truncate(fromValue[0]) : fromValue.map(truncate).join(', ')
+      const fromPreview = fromStrings.length === 1 ? truncate(fromStrings[0]) : fromStrings.map((f) => truncate(f)).join(', ')
       const toPreview = Array.isArray(toValue) ? toValue.map(truncate).join(', ') : truncate(toValue)
       console.log(chalk.gray(`Rule ${index + 1}: files=${filesValue.join(', ')} from=${fromPreview} to=${toPreview}`))
     }
