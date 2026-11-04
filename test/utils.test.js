@@ -321,6 +321,11 @@ describe('replacePlaceholders', () => {
     }
   })
 
+  it('escapeDollar also escapes unresolved placeholders', () => {
+    const key = 'UNSET_' + Date.now()
+    assert.strictEqual(replacePlaceholders(`$$${key}$$`, { escapeDollar: true }), `$$$$${key}$$$$`)
+  })
+
   it('does not expand placeholders inside substituted values', () => {
     const a = 'CHAIN_A_' + Date.now()
     const b = 'CHAIN_B_' + Date.now()
@@ -342,6 +347,21 @@ describe('replacePlaceholders', () => {
     } finally {
       delete process.env[key]
     }
+  })
+
+  it('resolves package__ from given pkg; scalars only', () => {
+    const pkg = { name: 'p', version: '1.2.3', private: true, n: 7, repository: { url: 'x' }, keywords: ['a'] }
+    assert.strictEqual(
+      replacePlaceholders('$$package__name$$@$$package__version$$ $$package__private$$ $$package__n$$', { pkg }),
+      'p@1.2.3 true 7'
+    )
+    assert.strictEqual(replacePlaceholders('$$package__repository$$', { pkg }), '$$package__repository$$')
+    assert.strictEqual(replacePlaceholders('$$package__keywords$$', { pkg }), '$$package__keywords$$')
+    assert.strictEqual(replacePlaceholders('$$package__missing$$', { pkg }), '$$package__missing$$')
+  })
+
+  it('leaves package__ placeholder when no pkg given', () => {
+    assert.strictEqual(replacePlaceholders('$$package__name$$'), '$$package__name$$')
   })
 
   it('package__ only resolves top-level keys (nested like package__scripts.build not supported)', () => {

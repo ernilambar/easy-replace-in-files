@@ -228,6 +228,38 @@ describe('easyReplaceInFiles (programmatic)', () => {
     }
   })
 
+  it('package__ placeholders resolve from package.json nearest to cwd, not process.cwd()', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'package.json'), JSON.stringify({ name: 'inner-pkg', version: '9.9.9', repository: { url: 'x' } }))
+      fs.writeFileSync(path.join(tmp, 'f.txt'), 'N V R')
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
+        easyReplaceInFiles: [{ files: 'f.txt', from: ['N', 'V', 'R'], to: ['$$package__name$$', '$$package__version$$', '$$package__repository$$'] }]
+      }))
+      const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
+      assert.strictEqual(result.ok, true)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), 'inner-pkg 9.9.9 $$package__repository$$')
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('unresolved placeholder in to is written verbatim', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
+    const key = 'APP_UNSET_' + Date.now()
+    try {
+      fs.writeFileSync(path.join(tmp, 'f.txt'), 'X')
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
+        easyReplaceInFiles: [{ files: 'f.txt', from: 'X', to: `a $$${key}$$ b` }]
+      }))
+      const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
+      assert.strictEqual(result.ok, true)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), `a $$${key}$$ b`)
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
   it('glob matching no files does not throw; rule succeeds', () => {
     const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
     try {

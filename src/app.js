@@ -2,6 +2,7 @@ import path from 'path'
 import chalk from 'chalk'
 import unixify from 'unixify'
 import { replaceInFileSync } from 'replace-in-file'
+import { readPackageUpSync } from 'read-package-up'
 
 import {
   getParamValue,
@@ -46,6 +47,13 @@ function easyReplaceInFiles (opts = {}) {
     return { succeeded: 0, skipped: 0, failed: 0, ok: false }
   }
 
+  let pkg
+  try {
+    pkg = readPackageUpSync({ cwd })?.packageJson
+  } catch {
+    pkg = undefined
+  }
+
   const list = configData.easyReplaceInFiles
   let succeededCount = 0
   let skippedCount = 0
@@ -62,7 +70,7 @@ function easyReplaceInFiles (opts = {}) {
     }
 
     let filesValue = Array.isArray(item.files) ? item.files.map(String) : [String(item.files)]
-    filesValue = filesValue.map((k) => replacePlaceholders(k))
+    filesValue = filesValue.map((k) => replacePlaceholders(k, { pkg }))
     if (cwd) {
       filesValue = filesValue.map((f) => (path.isAbsolute(f) ? f : path.resolve(cwd, f)))
     }
@@ -84,9 +92,9 @@ function easyReplaceInFiles (opts = {}) {
 
     let toValue
     if (Array.isArray(item.to)) {
-      toValue = item.to.map((element) => replacePlaceholders(String(element), { escapeDollar: true }))
+      toValue = item.to.map((element) => replacePlaceholders(String(element), { escapeDollar: true, pkg }))
     } else {
-      toValue = replacePlaceholders(String(item.to), { escapeDollar: true })
+      toValue = replacePlaceholders(String(item.to), { escapeDollar: true, pkg })
     }
 
     const options = {

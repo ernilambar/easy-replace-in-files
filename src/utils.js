@@ -1,4 +1,4 @@
-import { readPackageUpSync } from 'read-package-up'
+import chalk from 'chalk'
 
 /**
  * @param {unknown} obj
@@ -87,10 +87,10 @@ const getParamValue = (string, mode = 'string') => {
 /**
  * Expand $$ENV_VAR$$ and $$package__field$$ in a single pass; values are inserted literally.
  * @param {string} string
- * @param {{ escapeDollar?: boolean }} [opts] - Escape `$` in values so a later String.replace() keeps them literal (use for `to`)
+ * @param {{ escapeDollar?: boolean, pkg?: Record<string, unknown> }} [opts] - `escapeDollar`: escape `$` in values so a later String.replace() keeps them literal (use for `to`). `pkg`: parsed package.json for `package__` lookups.
  * @returns {string}
  */
-const replacePlaceholders = (string, { escapeDollar = false } = {}) => {
+const replacePlaceholders = (string, { escapeDollar = false, pkg } = {}) => {
   if (typeof string !== 'string') {
     return string
   }
@@ -103,24 +103,17 @@ const replacePlaceholders = (string, { escapeDollar = false } = {}) => {
     } else if (item.includes('package__')) {
       const pvar = item.replace('package__', '')
 
-      let pkg
-      try {
-        const result = readPackageUpSync()
-        pkg = result?.packageJson
-      } catch {
-        pkg = undefined
-      }
-
       if (pkg && Object.prototype.hasOwnProperty.call(pkg, pvar)) {
         value = pkg[pvar]
+        if (!['string', 'number', 'boolean'].includes(typeof value)) {
+          console.log(`${chalk.cyan('WARN')}: ${chalk.yellow(match)} is not a string, number, or boolean. Leaving as is.`)
+          value = undefined
+        }
       }
     }
 
-    if (value === undefined) {
-      return match
-    }
-
-    const str = String(value)
+    // Unresolved placeholders are kept verbatim (escaped too, so `to` output still reads $$KEY$$)
+    const str = value === undefined ? match : String(value)
     return escapeDollar ? str.replaceAll('$', '$$$$') : str
   })
 }
