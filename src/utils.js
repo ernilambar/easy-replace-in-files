@@ -67,6 +67,7 @@ const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
  * @param {string} string
  * @param {string} [mode='string']
  * @returns {string|RegExp}
+ * @throws {SyntaxError} When mode is regex and the pattern is invalid
  */
 const getParamValue = (string, mode = 'string') => {
   if (typeof string !== 'string') {
@@ -74,11 +75,7 @@ const getParamValue = (string, mode = 'string') => {
   }
 
   if (mode === 'regex') {
-    try {
-      return new RegExp(string, 'g')
-    } catch {
-      return string
-    }
+    return new RegExp(string, 'g')
   }
 
   return new RegExp(escapeRegex(string), 'g')

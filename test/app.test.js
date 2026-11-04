@@ -80,21 +80,22 @@ describe('easyReplaceInFiles (programmatic)', () => {
     }
   })
 
-  it('rule with invalid regex does not crash; falls back to literal string replace', () => {
+  it('rule with invalid regex fails without crashing; file untouched, other rules still run', () => {
     const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
     try {
       fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
         easyReplaceInFiles: [
-          { files: 'f.txt', from: '[unclosed', type: 'regex', to: 'FIXED' }
+          { files: 'f.txt', from: '[unclosed', type: 'regex', to: 'FIXED' },
+          { files: 'f.txt', from: 'after', to: 'later' }
         ]
       }))
       fs.writeFileSync(path.join(tmp, 'f.txt'), 'before [unclosed after')
 
       const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
       assert.strictEqual(result.succeeded, 1)
-      assert.strictEqual(result.failed, 0)
-      assert.strictEqual(result.ok, true)
-      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), 'before FIXED after')
+      assert.strictEqual(result.failed, 1)
+      assert.strictEqual(result.ok, false)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), 'before [unclosed later')
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true })
     }
@@ -132,19 +133,39 @@ describe('easyReplaceInFiles (programmatic)', () => {
     }
   })
 
-  it('from/to array length mismatch: extra from uses undefined replacement (no throw)', () => {
+  it('from/to item count mismatch: rule skipped with WARN, file untouched', () => {
     const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
     try {
       fs.writeFileSync(path.join(tmp, 'f.txt'), 'A B C')
       fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
         easyReplaceInFiles: [
-          { files: 'f.txt', from: ['A', 'B', 'C'], to: ['1', '2'] }
+          { files: 'f.txt', from: ['A', 'B', 'C'], to: ['1', '2'] },
+          { files: 'f.txt', from: 'A', to: ['1', '2'] },
+          { files: 'f.txt', from: 'A', to: [] }
         ]
       }))
       const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
-      assert.strictEqual(result.succeeded, 1)
+      assert.strictEqual(result.succeeded, 0)
+      assert.strictEqual(result.skipped, 3)
       assert.strictEqual(result.failed, 0)
-      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), '1 2 C')
+      assert.strictEqual(result.ok, true)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), 'A B C')
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+
+  it('string to with array from applies to every from item', () => {
+    const tmp = fs.mkdtempSync(path.join(projectRoot, 'tmp-app-test-'))
+    try {
+      fs.writeFileSync(path.join(tmp, 'f.txt'), 'A B C')
+      fs.writeFileSync(path.join(tmp, 'easy-replace-in-files.json'), JSON.stringify({
+        easyReplaceInFiles: [{ files: 'f.txt', from: ['A', 'B'], to: 'X' }]
+      }))
+      const result = easyReplaceInFiles({ cwd: tmp, noExit: true })
+      assert.strictEqual(result.succeeded, 1)
+      assert.strictEqual(result.skipped, 0)
+      assert.strictEqual(fs.readFileSync(path.join(tmp, 'f.txt'), 'utf8'), 'X X C')
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true })
     }

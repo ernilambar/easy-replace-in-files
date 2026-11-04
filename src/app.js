@@ -82,11 +82,24 @@ function easyReplaceInFiles (opts = {}) {
     }
 
     const fromStrings = Array.isArray(item.from) ? item.from.map(String) : [String(item.from)]
-    const fromValue = fromStrings.map((element) => getParamValue(element, item.type))
+    let fromValue
+    try {
+      fromValue = fromStrings.map((element) => getParamValue(element, item.type))
+    } catch (error) {
+      failedCount += 1
+      console.error(`Error in rule ${index + 1}:`, error.message)
+      return
+    }
 
     if (!isValidTo(item.to)) {
       skippedCount += 1
       console.log(`${chalk.cyan('WARN')}: rule ${index + 1}: ${chalk.yellow('to')} must be a string or array of strings. Skipping.`)
+      return
+    }
+
+    if (Array.isArray(item.to) && item.to.length !== fromStrings.length) {
+      skippedCount += 1
+      console.log(`${chalk.cyan('WARN')}: rule ${index + 1}: ${chalk.yellow('from')} and ${chalk.yellow('to')} must have the same number of items. Skipping.`)
       return
     }
 

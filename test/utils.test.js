@@ -209,10 +209,8 @@ describe('getParamValue', () => {
     assert.strictEqual('a1b2'.replace(result, 'X'), 'aXbX')
   })
 
-  it('returns string when mode is regex but pattern is invalid', () => {
-    const result = getParamValue('[unclosed', 'regex')
-    assert.strictEqual(typeof result, 'string')
-    assert.strictEqual(result, '[unclosed')
+  it('throws SyntaxError when mode is regex and pattern is invalid', () => {
+    assert.throws(() => getParamValue('[unclosed', 'regex'), SyntaxError)
   })
 
   it('returns non-string input as-is (defensive)', () => {
