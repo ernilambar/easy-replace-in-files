@@ -1,52 +1,6 @@
 import chalk from 'chalk'
 
 /**
- * @param {unknown} obj
- * @returns {boolean}
- */
-const isEmptyObject = (obj) => {
-  return obj && Object.keys(obj).length === 0 && Object.getPrototypeOf(obj) === Object.prototype
-}
-
-/**
- * @param {unknown} obj
- * @returns {obj is Record<string, unknown>}
- */
-const isPlainObject = (obj) =>
-  obj !== null && typeof obj === 'object' && !Array.isArray(obj)
-
-/**
- * @param {unknown} x
- * @returns {boolean}
- */
-const isStringifiable = (x) =>
-  x === null || typeof x === 'string' || typeof x === 'number' || typeof x === 'boolean'
-
-/**
- * @param {unknown} v
- * @returns {boolean}
- */
-const isValidFiles = (v) =>
-  (typeof v === 'string' && v !== '') ||
-  (Array.isArray(v) && v.length > 0 && v.every((x) => isStringifiable(x) && x !== ''))
-
-/**
- * @param {unknown} v
- * @returns {boolean}
- */
-const isValidFrom = (v) =>
-  (typeof v === 'string' && v !== '') ||
-  (Array.isArray(v) && v.length > 0 && v.every((x) => isStringifiable(x) && x !== ''))
-
-/**
- * @param {unknown} v
- * @returns {boolean}
- */
-const isValidTo = (v) =>
-  typeof v === 'string' ||
-  (Array.isArray(v) && v.every(isStringifiable))
-
-/**
  * @param {string|unknown} str - Coerced to string (e.g. for preview of RegExp)
  * @param {number} [max=50]
  * @returns {string}
@@ -116,14 +70,7 @@ const replacePlaceholders = (string, { escapeDollar = false, pkg } = {}) => {
 }
 
 export {
-  isEmptyObject,
-  isPlainObject,
-  isStringifiable,
-  isValidFiles,
-  isValidFrom,
-  isValidTo,
   truncate,
-  escapeRegex,
   getParamValue,
   replacePlaceholders
 }

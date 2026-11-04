@@ -1,134 +1,10 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert'
 import {
-  isEmptyObject,
-  isPlainObject,
-  isStringifiable,
-  isValidFiles,
-  isValidFrom,
-  isValidTo,
   truncate,
   getParamValue,
   replacePlaceholders
 } from '../src/utils.js'
-
-describe('isPlainObject', () => {
-  it('returns true for plain object', () => {
-    assert.strictEqual(isPlainObject({}), true)
-    assert.strictEqual(isPlainObject({ a: 1 }), true)
-  })
-
-  it('returns false for null', () => {
-    assert.strictEqual(isPlainObject(null), false)
-  })
-
-  it('returns false for array', () => {
-    assert.strictEqual(isPlainObject([]), false)
-  })
-
-  it('returns false for string', () => {
-    assert.strictEqual(isPlainObject(''), false)
-    assert.strictEqual(isPlainObject('x'), false)
-  })
-
-  it('returns false for number and boolean', () => {
-    assert.strictEqual(isPlainObject(0), false)
-    assert.strictEqual(isPlainObject(true), false)
-  })
-
-  it('returns true for Date and RegExp (current impl treats any non-array object as plain)', () => {
-    assert.strictEqual(isPlainObject(new Date()), true)
-    assert.strictEqual(isPlainObject(/x/), true)
-  })
-})
-
-describe('isStringifiable', () => {
-  it('returns true for string, number, boolean, null', () => {
-    assert.strictEqual(isStringifiable(''), true)
-    assert.strictEqual(isStringifiable('x'), true)
-    assert.strictEqual(isStringifiable(0), true)
-    assert.strictEqual(isStringifiable(null), true)
-    assert.strictEqual(isStringifiable(true), true)
-  })
-
-  it('returns false for object and array', () => {
-    assert.strictEqual(isStringifiable({}), false)
-    assert.strictEqual(isStringifiable([]), false)
-  })
-
-  it('returns false for undefined', () => {
-    assert.strictEqual(isStringifiable(undefined), false)
-  })
-})
-
-describe('isValidFiles', () => {
-  it('returns true for non-empty string', () => {
-    assert.strictEqual(isValidFiles('a'), true)
-    assert.strictEqual(isValidFiles('file.txt'), true)
-  })
-
-  it('returns false for empty string', () => {
-    assert.strictEqual(isValidFiles(''), false)
-  })
-
-  it('returns false for empty array', () => {
-    assert.strictEqual(isValidFiles([]), false)
-  })
-
-  it('returns true for non-empty array of stringifiable elements', () => {
-    assert.strictEqual(isValidFiles(['a.txt', 'b.txt']), true)
-    assert.strictEqual(isValidFiles(['x']), true)
-  })
-
-  it('returns false for array with an empty string element', () => {
-    assert.strictEqual(isValidFiles(['']), false)
-    assert.strictEqual(isValidFiles(['a', '']), false)
-  })
-
-  it('returns false for array with non-stringifiable element', () => {
-    assert.strictEqual(isValidFiles(['a', {}]), false)
-    assert.strictEqual(isValidFiles(['a', undefined]), false)
-  })
-})
-
-describe('isValidFrom', () => {
-  it('returns true for non-empty string', () => {
-    assert.strictEqual(isValidFrom('x'), true)
-  })
-
-  it('returns false for empty string', () => {
-    assert.strictEqual(isValidFrom(''), false)
-  })
-
-  it('returns false for empty array', () => {
-    assert.strictEqual(isValidFrom([]), false)
-  })
-
-  it('returns true for non-empty array of stringifiable elements', () => {
-    assert.strictEqual(isValidFrom(['a', 'b']), true)
-  })
-
-  it('returns false for array with an empty string element', () => {
-    assert.strictEqual(isValidFrom(['']), false)
-    assert.strictEqual(isValidFrom(['a', '']), false)
-  })
-})
-
-describe('isValidTo', () => {
-  it('returns true for string including empty', () => {
-    assert.strictEqual(isValidTo(''), true)
-    assert.strictEqual(isValidTo('x'), true)
-  })
-
-  it('returns true for array of stringifiable elements', () => {
-    assert.strictEqual(isValidTo(['a', 'b']), true)
-    assert.strictEqual(isValidTo([]), true)
-  })
-
-  it('returns false for array with non-stringifiable element', () => {
-    assert.strictEqual(isValidTo(['a', {}]), false)
-  })
-})
 
 describe('truncate', () => {
   it('returns string unchanged when length <= max', () => {
@@ -150,38 +26,6 @@ describe('truncate', () => {
   it('coerces non-string to string', () => {
     assert.strictEqual(truncate(123, 5), '123')
     assert.strictEqual(truncate(null, 5), 'null')
-  })
-})
-
-describe('isEmptyObject', () => {
-  it('returns true for empty plain object', () => {
-    assert.strictEqual(isEmptyObject({}), true)
-  })
-
-  it('returns false for object with keys', () => {
-    assert.strictEqual(isEmptyObject({ a: 1 }), false)
-  })
-
-  it('returns falsy for null', () => {
-    assert.ok(!isEmptyObject(null))
-  })
-
-  it('returns false for array', () => {
-    assert.strictEqual(isEmptyObject([]), false)
-  })
-
-  it('returns falsy for non-object', () => {
-    assert.ok(!isEmptyObject(''))
-    assert.ok(!isEmptyObject(0))
-  })
-
-  it('returns falsy for undefined', () => {
-    assert.ok(!isEmptyObject(undefined))
-  })
-
-  it('returns true for object with symbol keys only (Object.keys omits symbols)', () => {
-    const sym = Symbol('x')
-    assert.strictEqual(isEmptyObject({ [sym]: 1 }), true)
   })
 })
 

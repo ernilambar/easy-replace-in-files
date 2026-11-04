@@ -7,9 +7,6 @@ import { readPackageUpSync } from 'read-package-up'
 import {
   getParamValue,
   replacePlaceholders,
-  isValidFiles,
-  isValidFrom,
-  isValidTo,
   truncate
 } from './utils.js'
 import { loadConfig } from './config.js'
@@ -60,40 +57,17 @@ function easyReplaceInFiles (opts = {}) {
   let failedCount = 0
 
   list.forEach(function (item, index) {
-    const defaults = { files: '', from: '', to: '', type: 'string' }
-    item = { ...defaults, ...item }
-
-    if (!isValidFiles(item.files)) {
-      skippedCount += 1
-      console.log(`${chalk.cyan('WARN')}: rule ${index + 1}: ${chalk.yellow('files')} must be a non-empty string or non-empty array of strings. Skipping.`)
-      return
-    }
-
-    let filesValue = Array.isArray(item.files) ? item.files.map(String) : [String(item.files)]
+    let filesValue = Array.isArray(item.files) ? item.files : [item.files]
     filesValue = filesValue.map((k) => replacePlaceholders(k, { pkg }))
-    if (cwd) {
-      filesValue = filesValue.map((f) => (path.isAbsolute(f) ? f : path.resolve(cwd, f)))
-    }
+    filesValue = filesValue.map((f) => (path.isAbsolute(f) ? f : path.resolve(cwd, f)))
 
-    if (!isValidFrom(item.from)) {
-      skippedCount += 1
-      console.log(`${chalk.cyan('WARN')}: rule ${index + 1}: ${chalk.yellow('from')} must be a non-empty string or non-empty array of strings. Skipping.`)
-      return
-    }
-
-    const fromStrings = Array.isArray(item.from) ? item.from.map(String) : [String(item.from)]
+    const fromStrings = Array.isArray(item.from) ? item.from : [item.from]
     let fromValue
     try {
       fromValue = fromStrings.map((element) => getParamValue(element, item.type))
     } catch (error) {
       failedCount += 1
       console.error(`Error in rule ${index + 1}:`, error.message)
-      return
-    }
-
-    if (!isValidTo(item.to)) {
-      skippedCount += 1
-      console.log(`${chalk.cyan('WARN')}: rule ${index + 1}: ${chalk.yellow('to')} must be a string or array of strings. Skipping.`)
       return
     }
 
@@ -105,9 +79,9 @@ function easyReplaceInFiles (opts = {}) {
 
     let toValue
     if (Array.isArray(item.to)) {
-      toValue = item.to.map((element) => replacePlaceholders(String(element), { escapeDollar: true, pkg }))
+      toValue = item.to.map((element) => replacePlaceholders(element, { escapeDollar: true, pkg }))
     } else {
-      toValue = replacePlaceholders(String(item.to), { escapeDollar: true, pkg })
+      toValue = replacePlaceholders(item.to, { escapeDollar: true, pkg })
     }
 
     const options = {
